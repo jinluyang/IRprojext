@@ -46,20 +46,17 @@ static int btree_split(btree_t *btree, btree_node_t *node) ;
 static int _btree_insert(btree_t *btree, btree_node_t *node, dictnode key, int idx); 
 int btree_insert(btree_t *btree, dictnode key); 
 
-int btree_create(btree_t *_btree, int m)  
+btree_t *  btree_create( int m)  
 {  
     btree_t *btree = NULL;  
   
     if(m < 3) {  
         cout << "Parameter 'max' must geater than 2.\n";  
-        return -1;  
+//        exit(0);
+        return NULL;  
     }  
   
     btree = new(btree_t);  
-    if(NULL == btree) {  
-        cout << "btree==NULL";  
-        return -1;  
-    }  
   
     btree->max= m - 1;  
     btree->min = m/2;  
@@ -71,8 +68,8 @@ int btree_create(btree_t *_btree, int m)
     btree->sidx = m/2;  
     btree->root = NULL; /* 空树 */  
   
-    _btree = btree;  
-    return 0;  
+//    _btree = btree;  
+    return btree;  
 }  
 /****************************************************************************** 
  **函数名称: btree_creat_node 
@@ -83,12 +80,13 @@ int btree_create(btree_t *_btree, int m)
  **返    回: 节点地址
  ******************************************************************************/  
 /////here
-static btree_node_t *btree_creat_node(btree_t *btree)  
+static btree_node_t *btree_creat_node(btree_t *btree) // using its max 
 {  
     btree_node_t *node = NULL;  
   
   
     //node = (btree_node_t *)calloc(1, sizeof(btree_node_t));  
+    cout << "create" << endl;
     node = new(btree_node_t);  
   
     node->num = 0;  
@@ -119,17 +117,20 @@ int btree_insert(btree_t *btree, dictnode key)
 //mainly search
     int idx = 0;  
     btree_node_t *node = btree->root;  
+        cout << "aaea" << endl;
   
     /* 1. 构建第一个结点 */  
     if(NULL == node) {  
+            cout << "first" << endl;
         node = btree_creat_node(btree);  
+        cout << "aaaa" << endl;
         if(NULL == node) {  
             cout << " Create node failed!\n";  
             return -1;  
         }  
   
         node->num = 1;  
-        node->keys.push_back(key);  
+        node->keys[0]=key;  
         node->parent = NULL;  
   
         btree->root = node;  
@@ -286,7 +287,11 @@ int main()
 	//cin >> s;
 	//cout<< s;
         btree_t *  bt;
-        btree_create(bt,4);
+        bt = btree_create(4);
+        if ( bt->root==NULL)
+        {
+          cout <<"yes"<< endl;
+        }
         dictnode dnd ;
         dnd.str="a";
         btree_insert(bt,dnd);
