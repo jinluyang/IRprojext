@@ -13,24 +13,25 @@ typedef struct dictnode
     //TODO daopaijilubiao zaizifuchuanzhongdeweizhi 
 }dictnode;
 
-typedef struct _btree_node_t  
+//typedef struct _btree_node_t  
+//{  
+//    int num;                        /* 关键字个数 */  
+//    vector<dictnode>  keys;                      /* 关键字：所占空间为(max+1) - 多出来的1个空间用于交换空间使用 */  
+//    vector<btree_node_t> child;   /* 子结点：所占空间为（max+2）- 多出来的1个空间用于交换空间使用 */  
+//    struct _btree_node_t *parent;   /* 父结点 */  
+//}btree_node_t;  
+class btree_node_t
 {  
+public:
     int num;                        /* 关键字个数 */  
     vector<dictnode>  keys;                      /* 关键字：所占空间为(max+1) - 多出来的1个空间用于交换空间使用 */  
-    vector<_btree_node_t> child;   /* 子结点：所占空间为（max+2）- 多出来的1个空间用于交换空间使用 */  
-    struct _btree_node_t *parent;   /* 父结点 */  
-}btree_node_t;  
-//class btree_node_t
-//{  
-//public:
-//    int num;                        /* 关键字个数 */  
-//    dictnode * keys;                      /* 关键字：所占空间为(max+1) - 多出来的1个空间用于交换空间使用 */  
-//    btree_node_t **child;   /* 子结点：所占空间为（max+2）- 多出来的1个空间用于交换空间使用 */  
-//    btree_node_t *parent;   /* 父结点 */  
-//    btree_node_t(int m){
+    vector<btree_node_t*> child;   /* 子结点：所占空间为（max+2）- 多出来的1个空间用于交换空间使用 */  
+    btree_node_t *parent;   /* 父结点 */  
+    btree_node_t(){
+            num = 0;
 //    this->keys = &(dictnode[m]);
-//    }
-//};  
+    }
+};  
 
 /* B树结构 */  
 typedef struct  
@@ -89,12 +90,10 @@ static btree_node_t *btree_creat_node(btree_t *btree)
   
     //node = (btree_node_t *)calloc(1, sizeof(btree_node_t));  
     node = new(btree_node_t);  
-    if(NULL == node) {  
-        cout << "[%s][] errmsg:[%d] asf";  
-        return NULL;  
-    }  
   
     node->num = 0;  
+    node->child.resize(btree->max+2);
+    node->keys.resize(btree->max+1);
   
     /* More than (max) is for move */  
 //    node->key = (int *)calloc(btree->max+1, sizeof(int));  
@@ -209,7 +208,7 @@ static int btree_split(btree_t *btree, btree_node_t *node)
 //        memcpy(node2->child, node->child+sidx+1, (total-sidx) * sizeof(btree_node_t *));  
             node2->child.push_back(node->child[j]);
         }
-        node2->child.push_back(node->child[total];
+        node2->child.push_back(node->child[total]);
   
         node2->num = (total - sidx - 1);  
         node2->parent  = node->parent;  
@@ -236,10 +235,10 @@ static int btree_split(btree_t *btree, btree_node_t *node)
         }  
         else {         
             /* Insert into parent node */   
-                parent->keys.resize(parent->keys.size()+1)
-                parent->child.resize(parent->child.size()+1)
+//                parent->keys.resize(parent->keys.size()+1)
+//                parent->child.resize(parent->child.size()+1)
             for(idx=parent->num; idx>0; idx--) {         
-                if(node->keys[sidx] < parent->keys[idx-1]) {         
+                if(node->keys[sidx].str < parent->keys[idx-1].str) {         
                     parent->keys[idx] = parent->keys[idx-1];  
                     parent->child[idx+1] = parent->child[idx];  
                     continue;  
@@ -286,6 +285,12 @@ int main()
 	//string s;
 	//cin >> s;
 	//cout<< s;
+        btree_t *  bt;
+        btree_create(bt,4);
+        dictnode dnd ;
+        dnd.str="a";
+        btree_insert(bt,dnd);
+        
 
 	return 0;
 }
