@@ -4,6 +4,7 @@
 #include "classes.cpp"
 #include <stdio.h>
 #include <string.h>
+#include "single_string_dict.cpp"
 using namespace std;
 
 /* B树结点结构 */  
@@ -285,7 +286,9 @@ static int btree_split(btree_t *btree, btree_node_t *node)
 int main()
 {
 	string dictionary;
-	dictionary = "a\0am\0as\0bus\0";
+	dictionary = "a$am$as$bus$";
+	cout << dictionary << endl;
+        add(dictionary,"but");
 	cout << dictionary << endl;
 	//string s;
 	//cin >> s;
@@ -305,6 +308,7 @@ int main()
         dnd.str="am";
         btree_insert(bt,dnd);
         
+//        auto dict = new(item)
 
 	return 0;
 }
