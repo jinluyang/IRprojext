@@ -123,7 +123,6 @@ int btree_insert(btree_t *btree, dictnode key)
     if(NULL == node) {  
             cout << "first" << endl;
         node = btree_creat_node(btree);  
-        cout << "aaaa" << endl;
         if(NULL == node) {  
             cout << " Create node failed!\n";  
             return -1;  
@@ -166,9 +165,10 @@ static int _btree_insert(btree_t *btree, btree_node_t *node, dictnode key, int i
     int i ;  
   
     /* 1. 移动关键字:首先在最底层的某个非终端结点上插入一个关键字,因此该结点无孩子结点，故不涉及孩子指针的移动操作 */  
+                                                                 /*-------------------*/
 //    dictnode tmp = new(dictnode);
 //    node->keys.push_back(tmp);
-    node->keys.resize(node->keys.size()+1);
+//    node->keys.resize(node->keys.size()+1);
     for(i=node->num; i>idx; i--) {  
         node->keys[i] = node->keys[i-1];  
     }  
@@ -204,12 +204,14 @@ static int btree_split(btree_t *btree, btree_node_t *node)
 // copy the keys and child of node to node2
         for (int j = sidx+1;j < total ;j++)
         {
-            node2->keys.push_back(node->keys[j]);
 //        memcpy(node2->keys, node->keys + sidx + 1, (total-sidx-1) * sizeof(int));  
 //        memcpy(node2->child, node->child+sidx+1, (total-sidx) * sizeof(btree_node_t *));  
-            node2->child.push_back(node->child[j]);
+//            node2->keys.push_back(node->keys[j]);
+//            node2->child.push_back(node->child[j]);
+            node2->keys[j-sidx-1]=node->keys[j];
+            node2->child[j-sidx-1]=node->child[j];
         }
-        node2->child.push_back(node->child[total]);
+        node2->child[total]=node->child[total];
   
         node2->num = (total - sidx - 1);  
         node2->parent  = node->parent;  
@@ -226,12 +228,14 @@ static int btree_split(btree_t *btree, btree_node_t *node)
             }         
   
             btree->root = parent;   
-            parent->child.push_back(node);   
+//            parent->child.push_back(node);   
+            parent->child[0] = node;
             node->parent = parent;   
             node2->parent = parent;   
   
-            parent->keys.push_back(node->keys[sidx]);  
-            parent->child.push_back(node2);  
+//            parent->keys.push_back(node->keys[sidx]);  
+            parent->child[1] = node2;
+//            parent->child.push_back(node2);  
             parent->num++;  
         }  
         else {         
@@ -288,12 +292,17 @@ int main()
 	//cout<< s;
         btree_t *  bt;
         bt = btree_create(4);
-        if ( bt->root==NULL)
-        {
-          cout <<"yes"<< endl;
-        }
+//        if ( bt->root==NULL)
+//        {
+//          cout <<"yes"<< endl;
+//        }
         dictnode dnd ;
         dnd.str="a";
+        btree_insert(bt,dnd);
+        btree_insert(bt,dnd);
+        dnd.str="as";
+        btree_insert(bt,dnd);
+        dnd.str="am";
         btree_insert(bt,dnd);
         
 
