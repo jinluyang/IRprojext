@@ -8,12 +8,12 @@
 #include <vector>
 #include <cassert>
 
-#define _GAMMA_CODE_DEBUG_
+//#define _GAMMA_CODE_DEBUG_
 
 class GammaEncoder {
 private:
   // Assume docID is represented by unit32_t.
-  uint32_t *mBefAddr;  // the address of posting before encoding
+  const uint32_t *mBefAddr;  // the address of posting before encoding
   uint8_t  *mAftAddr;  // the address of posting after encoding
   uint32_t  mBefNum;   // the number of docIDs of posting before encoding
   uint32_t  mAftSize;  // the number of bytes of posting after encoding
@@ -24,7 +24,7 @@ private:
   uint32_t mLenCode;   // unary code of length
   uint32_t mOffCode;
 public:
-  GammaEncoder(uint32_t* addr, uint32_t num): mBefAddr(addr), mBefNum(num),
+  GammaEncoder(const uint32_t* addr, uint32_t num): mBefAddr(addr), mBefNum(num),
     mAftAddr(NULL), mAftSize(0), mCodes(), mCode(0), mCodeBitn(0), mLength(0), 
     mLenCode(0), mOffCode(0) {
   }
@@ -55,13 +55,14 @@ public:
     if (mCodeBitn == 8) {
       mCodes.push_back(mCode & 0xFF);
       mAftSize++;
+      mCodeBitn -= 8;
       return ;
     }
     int8_t shiftn = mCodeBitn - 8;
     uint64_t mask = 0xFF << shiftn;
     while (mCodeBitn >= 8) {
       assert(shiftn >= 0);
-      mCodes.push_back((mCode & mask) >> shiftn);
+      mCodes.push_back((uint8_t)((mCode & mask) >> shiftn));
       mCode &= (~mask);
       mask >>= 8;
       mCodeBitn -= 8;
@@ -140,7 +141,7 @@ private:
   std::vector<uint32_t> mValues;  // store values of gamma codes temporarily
 public:
   GammaDecoder(uint8_t* addr, uint32_t size): mBefAddr(addr), mBefSize(size),
-    mAftAddr(NULL), mAftNum(0) {
+    mAftAddr(NULL), mAftNum(0), mValues() {
   }
   void vec2Array(std::vector<uint32_t> vec) {
     if (vec.size() == 0) {
@@ -204,6 +205,11 @@ public:
           }
         }
       }
+    }
+    // deal with last interval(if it is 1)
+    if (isOffset) {
+      mValues.push_back(pre_value+1);
+      mAftNum++;
     }
     assert(mValues.size() == mAftNum);
     vec2Array(mValues);
