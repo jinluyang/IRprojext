@@ -104,8 +104,8 @@ void addDic(string filename)
 		if (!in)
 		{
 			cout << "文件不存在！" << endl;
-//			getch();
-//			exit(-1);
+			//getch();
+			exit(-1);
 		}
 	string line,word,word1; 
 	int num = 0;
@@ -337,7 +337,7 @@ int main()
 	//生成测试的块，并用于查询，真正实验时数据块由文件解压后读入
 	TermBlock *testHead = new TermBlock;
 	//testHead->next = NULL;
-	TermBlock *p = testHead;
+	TermBlock *pHead = testHead;
 	for (int i = 0; i<5 ; i++)
 	{
 		TermBlock *p1 = new TermBlock;
@@ -354,16 +354,37 @@ int main()
 	cout << "请输入要查找的单词：";
 	cin >> word;
 
-	if (BlockHash(word,p))
+	DocLIST *tmp = BlockHash(word,pHead);
+	if (tmp)
 	{
-		DocLIST *result_out = BlockHash(word,p)->next;
-		while(result_out)
+		tmp = tmp->next;
+	}
+	//cout<<tmp->DocId<<endl;
+
+	if (tmp)
+	{
+		//DocLIST *SearchResult ;
+		//SearchResult = BlockHash(word,pHead)->next;
+		while(tmp)
 			{
-				cout<<result_out->DocId<<" ";
-				result_out = result_out->next;
+				cout<<tmp->DocId<<" ";
+				tmp = tmp->next;
 			}
 			cout<<endl;
 	}
+
+
+	//if (BlockHash(word,pHead))
+	//{
+	//	DocLIST *SearchResult ;
+	//	SearchResult = BlockHash(word,pHead)->next;
+	//	while(SearchResult)
+	//		{
+	//			cout<<SearchResult->DocId<<" ";
+	//			SearchResult = SearchResult->next;
+	//		}
+	//		cout<<endl;
+	//}
 
 	return 0;
 }
