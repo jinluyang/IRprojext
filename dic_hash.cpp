@@ -1,11 +1,11 @@
-#include<iostream>
+ï»¿#include<iostream>
 #include<fstream>
 #include<sstream>
 #include<string>
 #include<vector>
 #include <stdio.h>
 #include <string.h>
-#include<conio.h>
+//#include<conio.h>
 
 #define Max_num_words 10000
 
@@ -14,7 +14,7 @@ using namespace std;
 //static string result;
 //bool SearchWord(string word);
 
-struct DocLIST		//Ë÷Òı±í
+struct DocLIST		//ç´¢å¼•è¡¨
 {
 	int DocId;
 	DocLIST *next;
@@ -22,9 +22,9 @@ struct DocLIST		//Ë÷Òı±í
 
 struct dictnode
 {
-	string word;  //µ¥´Ê
-	//unsigned int df;//ÎÄµµÆµÂÊ
-	DocLIST *ListHead;//µ¹ÅÅË÷Òı±íÍ·
+	string word;  //å•è¯
+	//unsigned int df;//æ–‡æ¡£é¢‘ç‡
+	DocLIST *ListHead;//å€’æ’ç´¢å¼•è¡¨å¤´
 };
 
 struct TermBlock
@@ -35,7 +35,7 @@ struct TermBlock
 	TermBlock *next;
 };
 
-struct HashNode    //hash±íÄÚÃ¿¸ö½ÚµãµÄÊı¾İ½á¹¹
+struct HashNode    //hashè¡¨å†…æ¯ä¸ªèŠ‚ç‚¹çš„æ•°æ®ç»“æ„
 {
 	dictnode word;
 	HashNode *next;
@@ -43,7 +43,7 @@ struct HashNode    //hash±íÄÚÃ¿¸ö½ÚµãµÄÊı¾İ½á¹¹
 
 HashNode *hash_table[Max_num_words];
 
-unsigned int ELFhash(string str)//»ñµÃ¼üÖµ£¬²ÉÓÃÎ»ÔËËã¹şÏ£ĞÎÊ½
+unsigned int ELFhash(string str)//è·å¾—é”®å€¼ï¼Œé‡‡ç”¨ä½è¿ç®—å“ˆå¸Œå½¢å¼
 {
 	unsigned int hash_key = 0;
 	unsigned int x = 0;
@@ -52,8 +52,8 @@ unsigned int ELFhash(string str)//»ñµÃ¼üÖµ£¬²ÉÓÃÎ»ÔËËã¹şÏ£ĞÎÊ½
 		hash_key = (hash_key << 4) + str[i];
 		if ((x = hash_key & 0xf0000000) != 0)
 		{
-			hash_key ^= (x >> 24);   //Ó°Ïì5-8Î»£¬ÔÓôÛÒ»´Î   
-			hash_key &= ~x;   //Çå¿Õ¸ßËÄÎ»   
+			hash_key ^= (x >> 24);   //å½±å“5-8ä½ï¼Œæ‚ç³…ä¸€æ¬¡   
+			hash_key &= ~x;   //æ¸…ç©ºé«˜å››ä½   
 		}
 	}
 	return (hash_key & 0x7fffffff);
@@ -67,7 +67,7 @@ void CapToLower(string &s)
 	}
 }
 
-//Ìí¼Ó½áµã
+//æ·»åŠ ç»“ç‚¹
 unsigned int AddHashNode(string word, /*string line*//*, int df,*/ DocLIST *ListHead) 
 {
 	unsigned int finish_label = 0;
@@ -77,12 +77,12 @@ unsigned int AddHashNode(string word, /*string line*//*, int df,*/ DocLIST *List
 	p->word.ListHead = ListHead;
 	p->next = NULL;
 	int n = ELFhash(word) % Max_num_words;
-	if (!hash_table[n])		//Ö±½ÓÉ¢ÁĞ
+	if (!hash_table[n])		//ç›´æ¥æ•£åˆ—
 	{
 		hash_table[n] = p;
 		finish_label = 1;
 	}
-							//³åÍ»´¦Àí,ÏòºóÁ´±í
+							//å†²çªå¤„ç†,å‘åé“¾è¡¨
 	else
 	{
 		HashNode *p2;
@@ -103,9 +103,9 @@ void addDic(string filename)
 	ifstream in(filename);
 		if (!in)
 		{
-			cout << "ÎÄ¼ş²»´æÔÚ£¡" << endl;
-			getch();
-			exit(-1);
+			cout << "æ–‡ä»¶ä¸å­˜åœ¨ï¼" << endl;
+//			getch();
+//			exit(-1);
 		}
 	string line,word,word1; 
 	int num = 0;
@@ -115,7 +115,7 @@ void addDic(string filename)
 
 		string::iterator it;
 
-		//È¥³ı¶ººÅ£¬Ã°ºÅ£¬À¨ºÅ£¬ÒıºÅµÈ·Ç±ØÒª×Ö·û
+		//å»é™¤é€—å·ï¼Œå†’å·ï¼Œæ‹¬å·ï¼Œå¼•å·ç­‰éå¿…è¦å­—ç¬¦
 		//for(int i = 0;i<line.size();i++)
 //		for(it =line.begin(); it != line.end(); it++)
 //		{
@@ -140,14 +140,14 @@ void addDic(string filename)
 
 		stringstream ss;
 		ss << line;
-		ss >> word;		//ÌáÈ¡³öµ¥´Ê
+		ss >> word;		//æå–å‡ºå•è¯
 		
 		//cout<<word<<endl;
 		int j = 0;
 		int value = 0;
 		DocLIST *Head = new DocLIST;
 		DocLIST *Tail = Head;
-		while(j<line.size())	//ÌáÈ¡ÎÄµµ±àºÅ´®
+		while(j<line.size())	//æå–æ–‡æ¡£ç¼–å·ä¸²
 		{
 			while(j<line.size()&&(line[j] > '9' || line[j] < '0'))
 			{j++;}
@@ -162,7 +162,7 @@ void addDic(string filename)
 			j++;
 			//cout << value << ' ';
 
-			DocLIST *Lnew = new DocLIST;		//ÎÄµµIDÁ´±í
+			DocLIST *Lnew = new DocLIST;		//æ–‡æ¡£IDé“¾è¡¨
 
 			Lnew->DocId = value;	
 			Tail->next = Lnew;
@@ -174,7 +174,7 @@ void addDic(string filename)
 }
 
 
-//Ñ­»·É¾³ı½áµã
+//å¾ªç¯åˆ é™¤ç»“ç‚¹
 void DeleteHashNode(HashNode *p)
 {
 	HashNode *tmp = p;
@@ -196,7 +196,7 @@ void DeleteHashNode(HashNode *p)
 	else p = NULL;*/
 }
 
-//±éÀúÉ¾³ıÁ´±í
+//éå†åˆ é™¤é“¾è¡¨
 
 void deleteList()
 {
@@ -209,7 +209,7 @@ void deleteList()
 	}
 }
 
-//²éÑ¯Êä³ö£¬·µ»Øµ¥´Ê¶ÔÓ¦µÄÎÄµµIDÁ´±í
+//æŸ¥è¯¢è¾“å‡ºï¼Œè¿”å›å•è¯å¯¹åº”çš„æ–‡æ¡£IDé“¾è¡¨
 
 DocLIST* SearchDocId(string word)
 {
@@ -245,14 +245,14 @@ DocLIST* SearchDocId(string word)
 }
 
 //*******************************************************************
-//**Description£º                                                   *
-//**input£º²¿·Öµ¹ÅÅ¼ÇÂ¼±í£¬²éÑ¯´Ê                                   *
-//**output:²éÑ¯´ÊµÄµ¹ÅÅ¼ÇÂ¼±í                                       *
-//**ÊäÈëÒ»¸ö²¿·Öµ¹ÅÅ¼ÇÂ¼±íµÄ´®£¬ÒÔ¼°Òª²éÑ¯µÄ´Ê                      *
-//**¶Ôµ¹ÅÅ¼ÇÂ¼±í¿é½øĞĞhash£¬hash¿Õ¼äÉè¶¨Îª10000£¬½¨Òéµ¥´Ê²»³¬¹ı1000 *
-//**²éÑ¯ÍêÊÍ·ÅhashµÄ¿Õ¼ä£¬±ãÓÚ¶ÔÏÂÒ»¸ö¿éµÄ²éÑ¯                      *
-//**½¨ÒéÒÔ¸ÃĞÎÊ½½øĞĞÊäÈëÊä³ö                                        *
-//**·ñÔò£¬µ±µ÷ÓÃAddHashNode()Öğµã½øĞĞhashºóµ÷ÓÃSearchDocId()²éÑ¯    *
+//**Descriptionï¼š                                                   *
+//**inputï¼šéƒ¨åˆ†å€’æ’è®°å½•è¡¨ï¼ŒæŸ¥è¯¢è¯                                   *
+//**output:æŸ¥è¯¢è¯çš„å€’æ’è®°å½•è¡¨                                       *
+//**è¾“å…¥ä¸€ä¸ªéƒ¨åˆ†å€’æ’è®°å½•è¡¨çš„ä¸²ï¼Œä»¥åŠè¦æŸ¥è¯¢çš„è¯                      *
+//**å¯¹å€’æ’è®°å½•è¡¨å—è¿›è¡Œhashï¼Œhashç©ºé—´è®¾å®šä¸º10000ï¼Œå»ºè®®å•è¯ä¸è¶…è¿‡1000 *
+//**æŸ¥è¯¢å®Œé‡Šæ”¾hashçš„ç©ºé—´ï¼Œä¾¿äºå¯¹ä¸‹ä¸€ä¸ªå—çš„æŸ¥è¯¢                      *
+//**å»ºè®®ä»¥è¯¥å½¢å¼è¿›è¡Œè¾“å…¥è¾“å‡º                                        *
+//**å¦åˆ™ï¼Œå½“è°ƒç”¨AddHashNode()é€ç‚¹è¿›è¡Œhashåè°ƒç”¨SearchDocId()æŸ¥è¯¢    *
 //*******************************************************************
 
 DocLIST* BlockHash(string term,TermBlock* BlockHead)		
@@ -267,19 +267,19 @@ DocLIST* BlockHash(string term,TermBlock* BlockHead)
 	DocLIST *DocIDList = SearchDocId(term);
 	if (!SearchDocId(term))
 		{
-			cout << "Î´ÕÒµ½µ¥´Ê£¬Çë¼ì²éÆ´Ğ´£¡\n";
+			cout << "æœªæ‰¾åˆ°å•è¯ï¼Œè¯·æ£€æŸ¥æ‹¼å†™ï¼\n";
 		}
 	deleteList();
 	return DocIDList;
 }
 
-//´ÊµäÑ¹Ëõ£¬Î´×öÍê
+//è¯å…¸å‹ç¼©ï¼Œæœªåšå®Œ
 //void dic_compress(string filename)
 //{
 //	ifstream in(filename);
 //	if (!in)
 //	{
-//		cout << "ÎÄ¼ş²»´æÔÚ£¡" << endl;
+//		cout << "æ–‡ä»¶ä¸å­˜åœ¨ï¼" << endl;
 //		getch();
 //		exit(-1);
 //	}
@@ -302,18 +302,18 @@ DocLIST* BlockHash(string term,TermBlock* BlockHead)
 
 int main()
 {
-	//string word;   //Òª²éÕÒµÄµ¥´Ê
-	//cout << ">>ÕıÔÚÌí¼Ó´Êµä£¬ÇëÉÔºó¡­¡­"<<endl;
+	//string word;   //è¦æŸ¥æ‰¾çš„å•è¯
+	//cout << ">>æ­£åœ¨æ·»åŠ è¯å…¸ï¼Œè¯·ç¨åâ€¦â€¦"<<endl;
 	//addDic("InvertedIndex1.txt");
-	//cout << ">>´Ê¿âÌí¼ÓÍê±Ï£¡" << endl;
-	//cout << "\nÇëÊäÈëÒª²éÕÒµÄµ¥´Ê£º";
+	//cout << ">>è¯åº“æ·»åŠ å®Œæ¯•ï¼" << endl;
+	//cout << "\nè¯·è¾“å…¥è¦æŸ¥æ‰¾çš„å•è¯ï¼š";
 	//cin >> word;
 	//while (word != "#")
 	//{
 	//	CapToLower(word);
 	//	if (!SearchDocId(word))
 	//	{
-	//		cout << "Î´ÕÒµ½µ¥´Ê£¬Çë¼ì²éÆ´Ğ´£¡\n";
+	//		cout << "æœªæ‰¾åˆ°å•è¯ï¼Œè¯·æ£€æŸ¥æ‹¼å†™ï¼\n";
 	//	}
 	//	else
 	//	{
@@ -326,15 +326,15 @@ int main()
 	//		cout<<endl;
 	//	}
 	//		//cout <<endl<<">> "<< result << endl;
-	//	cout << "\nÇëÊäÈëÒª²éÕÒµÄµ¥´Ê£º";
+	//	cout << "\nè¯·è¾“å…¥è¦æŸ¥æ‰¾çš„å•è¯ï¼š";
 	//	cin >> word;
 	//}
 
-	//cout<<"ÕıÔÚÇå³ı´Êµä£¬ÇëÉÔºó¡­¡­"<<endl;
+	//cout<<"æ­£åœ¨æ¸…é™¤è¯å…¸ï¼Œè¯·ç¨åâ€¦â€¦"<<endl;
 	//deleteList();
-	//cout<<"´ÊµäÇå³ıÍê±Ï£¬³ÌĞòÍË³ö£¡"<<endl;
+	//cout<<"è¯å…¸æ¸…é™¤å®Œæ¯•ï¼Œç¨‹åºé€€å‡ºï¼"<<endl;
 
-	//Éú³É²âÊÔµÄ¿é£¬²¢ÓÃÓÚ²éÑ¯£¬ÕæÕıÊµÑéÊ±Êı¾İ¿éÓÉÎÄ¼ş½âÑ¹ºó¶ÁÈë
+	//ç”Ÿæˆæµ‹è¯•çš„å—ï¼Œå¹¶ç”¨äºæŸ¥è¯¢ï¼ŒçœŸæ­£å®éªŒæ—¶æ•°æ®å—ç”±æ–‡ä»¶è§£å‹åè¯»å…¥
 	TermBlock *testHead = new TermBlock;
 	//testHead->next = NULL;
 	TermBlock *p = testHead;
@@ -350,8 +350,8 @@ int main()
 		testHead->next = p1;
 		testHead = testHead->next;
 	}
-	string word;   //Òª²éÕÒµÄµ¥´Ê
-	cout << "ÇëÊäÈëÒª²éÕÒµÄµ¥´Ê£º";
+	string word;   //è¦æŸ¥æ‰¾çš„å•è¯
+	cout << "è¯·è¾“å…¥è¦æŸ¥æ‰¾çš„å•è¯ï¼š";
 	cin >> word;
 
 	if (BlockHash(word,p))
