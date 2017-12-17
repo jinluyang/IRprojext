@@ -62,6 +62,7 @@ static btree_node_t *btree_creat_node(btree_t *btree) // using its max
     node->num = 0;  
     node->child.resize(btree->max+2);
     node->keys.resize(btree->max+1);
+    node->parent=NULL;
   
     /* More than (max) is for move */  
 //    node->key = (int *)calloc(btree->max+1, sizeof(int));  
@@ -190,6 +191,7 @@ static int btree_split(btree_t *btree, btree_node_t *node)
         node->num = sidx;   
         /* Insert into parent */  
         parent  = node->parent;  
+       // cout << "split"<< endl;
         if(NULL == parent)  {      
             /* Split root node */   
             parent = btree_creat_node(btree);  
@@ -197,6 +199,7 @@ static int btree_split(btree_t *btree, btree_node_t *node)
                 cout << " Create root failed!";  
                 return -1;  
             } 
+//            cout << "split root"<< endl;
   
             btree->root = parent;   
 //            parent->child.push_back(node);   
@@ -213,12 +216,14 @@ static int btree_split(btree_t *btree, btree_node_t *node)
 //            cout << node->keys[sidx].str<<endl;
 //            cout <<"lenth of parent->key"<< parent->keys.size()<<endl;
 //            cout << parent->keys[0].str<<endl;
-        }  
-        else {         
+        }
+        else { 
+//                cout << "parent num:"<< parent->num<<endl;
             /* Insert into parent node */   
 //                parent->keys.resize(parent->keys.size()+1)
 //                parent->child.resize(parent->child.size()+1)
             for(idx=parent->num; idx>0; idx--) {         
+//                    cout << "idx="<<idx<< endl;
                 if(node->keys[sidx].str < parent->keys[idx-1].str) {         
                     parent->keys[idx] = parent->keys[idx-1];  
                     parent->child[idx+1] = parent->child[idx];  
@@ -236,8 +241,8 @@ static int btree_split(btree_t *btree, btree_node_t *node)
 //        memset(node->keys+sidx, 0, (total - sidx) * sizeof(int));  
 //        memset(node->child+sidx+1, 0, (total - sidx) * sizeof(btree_node_t *));  
   
-        node->keys.resize(sidx);//+1?
-        node->child.resize(sidx+1);
+//        node->keys.resize(sidx);
+//        node->child.resize(sidx+1);
         /* Change node2's child->parent */  
         for(idx=0; idx<=node2->num; idx++) {  
             if(NULL != node2->child[idx]) {         
@@ -303,14 +308,12 @@ void print_bt(btree_t * bt)
 }
 void addDic(string filename, btree_t * bt)
 {
-	//string filename = "test.txt"; 
 	ifstream in(filename,ios::in);
 		if (!in)
 		{
 			cout << "文件不存在！" << endl;
 
-//			getch();
-	//		exit(-1);
+			exit(-1);
 		}
 	string line,word,word1; 
 	int num = 0;
@@ -391,7 +394,8 @@ void addDic(string filename, btree_t * bt)
 int main()
 {
 	string dictionary;
-	dictionary = "a$am$as$bus$";
+	//dictionary = "a$am$as$bus$";
+	dictionary = "aamasbus";
 //	cout << dictionary << endl;
         add(dictionary,"but");
 //	cout << dictionary << endl;
@@ -416,7 +420,7 @@ int main()
 //        auto dict = new(item)
 	string word;   //要查找的单词
 	cout << ">>正在添加词典，请稍后……"<<endl;
-	addDic("InvertedIndex1.txt",bt);
+	addDic("InvertedIndex.txt",bt);
 	cout << ">>词库添加完毕！" << endl;
         //print_bt(bt);
 	cout << "\n请输入要查找的单词：";
