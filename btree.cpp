@@ -7,7 +7,7 @@
 #include<fstream>
 #include<sstream>
 //#include<conio.h>
-#include "single_string_dict.cpp"
+//#include "single_string_dict.cpp"
 #include "btree.h"
 using namespace std;
 
@@ -37,6 +37,8 @@ btree_t *  btree_create( int m)
     btree->min--;  
     btree->sidx = m/2;  
     btree->root = NULL; /* 空树 */  
+    btree->dictionary.add("");
+//    cout << btree->dictionary<< "init dic"<<endl;
   
 //    _btree = btree;  
     return btree;  
@@ -83,8 +85,10 @@ static btree_node_t *btree_creat_node(btree_t *btree) // using its max
     return node;  
 }  
 
-int btree_insert(btree_t *btree, dictnode key)  
+int btree_insert(btree_t *btree, dictnode key, string word)  
 {  
+        key.str = btree->dictionary.add(word);
+//        cout << key.str<<endl;
 //mainly search
     int idx = 0;  
     btree_node_t *node = btree->root;  
@@ -112,6 +116,7 @@ int btree_insert(btree_t *btree, dictnode key)
         for(idx=0; idx<node->num; idx++) {  
             if(key.str == node->keys[idx].str) {  
                 cout << " The node exists!\n"; 
+                //TODO pop the dictionaty , but a assume no duplicates now
                 return 0;  
             }  
             else if(key.str < node->keys[idx].str) {  
@@ -271,11 +276,11 @@ List * btree_t::search(string query)
 	while(NULL != node) { 
         for(idx=0; idx<node->num; idx++) {  
 //                cout <<node->keys[idx].str<<endl;
-            if(query == node->keys[idx].str) {  
+            if(query == this->dictionary.getStr(node->keys[idx].str)) {  
                 cout << " found the query"<<endl; 
                 return node->keys[idx].ListHead; 
             }  
-            else if(query < node->keys[idx].str) {  
+            else if(query <  this->dictionary.getStr(node->keys[idx].str)) {  
 //                cout << "index:"<< idx<< endl;
                 break;  
             }  
@@ -379,9 +384,9 @@ void addDic(string filename, btree_t * bt)
 			Tail = Lnew;
 		}
 //		addNode(word, Head);
-		dnd.str = word;
+//		dnd.str = word;
 		dnd.ListHead = Head;
-		btree_insert(bt, dnd);
+		btree_insert(bt, dnd,word);
 //                print_bt(bt);
 	}
 }
@@ -393,11 +398,11 @@ void addDic(string filename, btree_t * bt)
 //};
 int main()
 {
-	string dictionary;
+	//string dictionary;
 	//dictionary = "a$am$as$bus$";
-	dictionary = "aamasbus";
+//	dictionary = "aamasbus";
 //	cout << dictionary << endl;
-        add(dictionary,"but");
+//        add(dictionary,"but");
 //	cout << dictionary << endl;
 	//string s;
 	//cin >> s;
@@ -408,8 +413,10 @@ int main()
 //        {
 //          cout <<"yes"<< endl;
 //        }
-        dictnode dnd ;
-        dnd.str="a";
+//
+//        dictnode dnd ;
+//        dnd.str="a";
+//
 //        btree_insert(bt,dnd);
 //        btree_insert(bt,dnd);
 //        dnd.str="as";
@@ -419,7 +426,7 @@ int main()
         
 //        auto dict = new(item)
 	string word;   //要查找的单词
-	cout << ">>正在添加词典，请稍后……"<<endl;
+	cout << ">>正在构建B树，请稍后……"<<endl;
 	addDic("InvertedIndex.txt",bt);
 	cout << ">>词库添加完毕！" << endl;
         //print_bt(bt);

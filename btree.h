@@ -1,3 +1,4 @@
+#include "single_string_dict.cpp"
 struct List		//索引表
 {
 	int DocId;
@@ -6,7 +7,7 @@ struct List		//索引表
 
 typedef struct dictnode
 {
-    string str;
+    int str;
 	//unsigned int df;//文档频率
 	List *ListHead;//倒排索引表头
     //TODO daopaijilubiao zaizifuchuanzhongdeweizhi 
@@ -40,4 +41,5 @@ typedef struct
     int sidx;                       /* 分裂索引 = (max+1)/2 */  
     btree_node_t *root;             /* B树根结点地址 */  
     List * search(string);
+    metastr dictionary;
 }btree_t;  
