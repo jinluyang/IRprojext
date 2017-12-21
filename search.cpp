@@ -105,6 +105,10 @@ void negation_L(LinkList &La, LinkList &Lb, LinkList &Lc) {
         } else
             pb = pb->next;
     }
+    while (pa) {
+        pc = pa;
+        pa = pa->next;
+    }
     pc->next = NULL;
     pb = Lb;
     while (pb) {
@@ -130,7 +134,7 @@ void visit(LinkList &node) {
 }
 
 //循环添加文件，实现多个布尔查询，例如输入：a AND about OR accept AND NOT able
-//返回：1 3 5 7 9 12
+//返回：1 3 5 7 9 12 20 21
 //输入的关键字全部存入string[]中
 //暂时不支持括号内查询
 //暂不支持区分大小写，操作符必须大写
@@ -160,6 +164,8 @@ void muliIntersect() {
     }
     num = i;
 
+        
+
     string tmp;
     string words[num];
     string ops[num];
@@ -183,7 +189,7 @@ void muliIntersect() {
         }
     }
     //如果第一个操作符为NOT，交换关键字位置再进行操作
-    if (strcmp(ops[0].c_str(), "NOT") == 0) {
+    if (strcmp(s[0].c_str(), "NOT") == 0) {
         tmp = words[0];
         words[0] = words[1];
         words[1] = tmp;
@@ -202,7 +208,14 @@ void muliIntersect() {
     }
 */	
     addDic("InvertedIndex.txt",bt);
-    LinkList A, B, C;
+    LinkList C;
+    if(num == 1) {
+        C = bt->search(word);
+        if (C->next == NULL) 
+            cout << "ERROR: 没有您要检索的关键字！请检查后重新启动" << endl;
+    } else { 
+
+    LinkList A, B;
     InitList(&A);
     InitList(&B);
     m=1;n=0;
@@ -214,13 +227,10 @@ void muliIntersect() {
     }
  
     while (!ops[n].empty()) {
-        if ((A->next==NULL || B->next==NULL) && n==0) {
+        if (A->next==NULL || B->next==NULL) {
             cout << "ERROR: 没有您要检索的关键字！请检查后重新启动" << endl;
             break;
-        } 
-        if (A->next==NULL || B->next==NULL) 
-            break;
-        else {
+        } else {
             if(ops[n] == "AND") 
                 intersect_L(A, B, C);
             else if (ops[n] == "OR") 
@@ -238,9 +248,11 @@ void muliIntersect() {
         m++;
         n++;
     }
+    }
+    if (C->next != NULL) {
     cout << "Output: " << endl; 
     listTraverse(C, visit);
-
+    }
 }
 
 int main()
