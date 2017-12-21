@@ -306,7 +306,7 @@ void print_bt(btree_t * bt)
     cout << "num"<< node->num<<endl;
     for (int i=0;i<node->num;i++)
     {
-        cout <<node->keys[i].str <<endl;
+        cout <<bt->dictionary.getStr(node->keys[i].str) <<endl;
     }
     cout <<"****"<<endl;
 //    node = node->child[0];
@@ -396,7 +396,7 @@ void addDic(string filename, btree_t * bt)
 //	Btree();
 //	void insert();
 //};
-int main()
+/*int main()
 {
 	//string dictionary;
 	//dictionary = "a$am$as$bus$";
@@ -446,4 +446,4 @@ int main()
 
 	return 0;
 }
-
+*/
