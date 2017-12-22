@@ -10,6 +10,7 @@ typedef struct dictnode
     int str;
 	//unsigned int df;//文档频率
 	List *ListHead;//倒排索引表头
+  streampos fpos;
     //TODO daopaijilubiao zaizifuchuanzhongdeweizhi 
 }dictnode;
 
@@ -40,6 +41,6 @@ typedef struct
     int min;                        /* 单个结点最小关键字个数 */  
     int sidx;                       /* 分裂索引 = (max+1)/2 */  
     btree_node_t *root;             /* B树根结点地址 */  
-    List * search(string);
+    streampos search(string);
     metastr dictionary;
 }btree_t;  

@@ -9,6 +9,7 @@
 //#include<conio.h>
 //#include "single_string_dict.cpp"
 #include "btree.h"
+#include "gammaCode.hpp"
 using namespace std;
 
 
@@ -260,11 +261,11 @@ static int btree_split(btree_t *btree, btree_node_t *node)
     return 0;  
 }  
 
-List * btree_t::search(string query)
+streampos btree_t::search(string query)
 {
-	btree_node_t * node = this->root;
-        int idx;
-	/*while(p->str.compare(query)!=0)
+  btree_node_t * node = this->root;
+  int idx;
+  /*while(p->str.compare(query)!=0)
 	{
 		if (p->str < query)
 		{
@@ -273,33 +274,29 @@ List * btree_t::search(string query)
 			
 		}
 	} */   
-	while(NULL != node) { 
-        for(idx=0; idx<node->num; idx++) {  
+  while(NULL != node) { 
+    for(idx=0; idx<node->num; idx++) {  
 //                cout <<node->keys[idx].str<<endl;
-            if(query == this->dictionary.getStr(node->keys[idx].str)) {  
-                cout << " found the query"<<endl; 
-                return node->keys[idx].ListHead; 
-            }  
-            else if(query <  this->dictionary.getStr(node->keys[idx].str)) {  
+      if(query == this->dictionary.getStr(node->keys[idx].str)) {  
+        cout << " found the query"<<endl; 
+        return node->keys[idx].fpos; 
+      } else if(query <  this->dictionary.getStr(node->keys[idx].str)) {  
 //                cout << "index:"<< idx<< endl;
-                break;  
-            }  
-        }  
-  
-        if(NULL != node->child[idx]) {  
-//                cout << node->keys[0].str;
-            node = node->child[idx]; //in the next loop , continue searching 
-//            cout <<"down"<<endl;
-        }  
-        else {  
-		cout <<"failed"<< endl;
-		return NULL;
-            break;  
-        }  
+        break;  
+      }  
     }  
 
-//	return node->;
+    if(NULL != node->child[idx]) {  
+//                cout << node->keys[0].str;
+      node = node->child[idx]; //in the next loop , continue searching 
+//            cout <<"down"<<endl;
+    } else {  
+      cout <<"failed"<< endl;
+      return -1;
+    }  
+  }  
 }
+
 void print_bt(btree_t * bt)
 {
     btree_node_t * node = bt->root;
@@ -309,141 +306,78 @@ void print_bt(btree_t * bt)
         cout <<bt->dictionary.getStr(node->keys[i].str) <<endl;
     }
     cout <<"****"<<endl;
-//    node = node->child[0];
 }
+
 void addDic(string filename, btree_t * bt)
 {
-	ifstream in(filename,ios::in);
-		if (!in)
-		{
-			cout << "文件不存在！" << endl;
+  ifstream in(filename,ios::in);
+  if (!in)
+  {
+    cout << "文件不存在！" << endl;
+    exit(-1);
+  }
+  string line,word,word1; 
+  int num = 0;
+  uint32_t codeSize;  // size of gamma codes
+  while(in >> word)
+  {
+    string::iterator it;
 
-			exit(-1);
-		}
-	string line,word,word1; 
-	int num = 0;
-	while(in)
-	{
-		getline(in, line);
-
-		string::iterator it;
-
-		//去除逗号，冒号，括号，引号等非必要字符
-		//for(int i = 0;i<line.size();i++)
-//		for(it =line.begin(); it != line.end(); it++)
-//		{
-//			//if (line[i] == ',')//||line[i]=='\''||line[i]=='['||line[i]=='{'||line[i]=='}')
-//			//	line[i] = ' ';
-//			//else if (line[i]=='\''||line[i]=='['||line[i]=='{'||line[i]=='}'||line[i]==':')
-//			//	line[i] = NULL;
-//		//	int tmp = 0;
-//		//	if (tmp == 1) {tmp = 0;it--;}
-//			if (*it == ',')//||line[i]=='\''||line[i]=='['||line[i]=='{'||line[i]=='}')
-//				*it = ' ';
-//			else if (*it=='\''||*it=='['||*it=='{'||*it=='}'||*it==':')
-//			{			
-//				//tmp = tmp + 1;
-////				if (tmp == 1) {tmp = 0;it--;}
-//		//		tmp = tmp + 1;
-//				line.erase(it);
-//				if (it == line.begin()) it = line.begin();
-//				else it--;
-//			}
-//		}
-
-		stringstream ss;
-		ss << line;
-		ss >> word;		//提取出单词
-		
-		//cout<<word<<endl;
-		int j = 0;
-		int value = 0;
-		List *Head = new List;
-		List *Tail = Head;
+    streampos fpos = in.tellg();
+	  in >> codeSize;
+    // Jump codes.
+    unsigned char code;
+    for (uint32_t i = 0; i < codeSize; i++) {
+      in >> code;
+    }
+		cout << word << " " << codeSize;
+    cout << " fpos: " << fpos << "\n";
 		dictnode dnd;
-		while(j<line.size())	//提取文档编号串
-		{
-			while(j<line.size()&&(line[j] > '9' || line[j] < '0'))
-			{j++;}
-		
-			int value = 0;
-			while(j<line.size()&&line[j] != ' ')
-			{
-				//cout<<line[j];
-				value = value * 10 + line[j] - '0';
-				j++;
-			}
-			j++;
-			//cout << value << ' ';
-
-			List *Lnew = new List;		//文档ID链表
-
-			Lnew->DocId = value;	
-			Tail->next = Lnew;
-			Lnew->next = NULL;
-			Tail = Lnew;
-		}
-//		addNode(word, Head);
-//		dnd.str = word;
-		dnd.ListHead = Head;
+		dnd.ListHead = nullptr;
+    dnd.fpos = fpos;
 		btree_insert(bt, dnd,word);
-//                print_bt(bt);
 	}
+  
+  in.close();
 }
-//class Btree
-//{
-//	public:
-//	Btree();
-//	void insert();
-//};
-/*int main()
-{
-	//string dictionary;
-	//dictionary = "a$am$as$bus$";
-//	dictionary = "aamasbus";
-//	cout << dictionary << endl;
-//        add(dictionary,"but");
-//	cout << dictionary << endl;
-	//string s;
-	//cin >> s;
-	//cout<< s;
-        btree_t *  bt;
-        bt = btree_create(8);
-//        if ( bt->root==NULL)
-//        {
-//          cout <<"yes"<< endl;
-//        }
-//
-//        dictnode dnd ;
-//        dnd.str="a";
-//
-//        btree_insert(bt,dnd);
-//        btree_insert(bt,dnd);
-//        dnd.str="as";
-//        btree_insert(bt,dnd);
-//        dnd.str="am";
-//        btree_insert(bt,dnd);
-        
-//        auto dict = new(item)
-	string word;   //要查找的单词
-	cout << ">>正在构建B树，请稍后……"<<endl;
-	addDic("InvertedIndex.txt",bt);
-	cout << ">>词库添加完毕！" << endl;
-        //print_bt(bt);
-	cout << "\n请输入要查找的单词：";
-	cin >> word;
-	List * res = bt->search(word);
-	if (res==NULL)
-		cout <<"fail!"<< endl;
-	else
-            while(res->next!=NULL)
-            {
-		cout << " "<<res->next->DocId<<endl;
-                res=res->next;
-            }
-//        if (res->next==NULL)
-//                cout << "next NULL"<<endl;
 
-	return 0;
-}
-*/
+//int main()
+//{
+//  btree_t *  bt;
+//  bt = btree_create(8);
+//	string word;   //要查找的单词
+//	cout << ">>正在构建B树，请稍后……"<<endl;
+//	addDic("InvertedIndex.txt",bt);
+//	cout << ">>词库添加完毕！" << endl;
+//        //print_bt(bt);
+//	cout << "\n请输入要查找的单词：";
+//  cin >> word;
+//  streampos pos = bt->search(word);
+//  ifstream in("InvertedIndex.txt",ios::in);
+//  if (!in.is_open()) {
+//    std::cout << "file open fail\n";
+//    return -1;
+//  }
+//  if (pos == -1) {
+//    // NOT FOUND!
+//    cout << "NOT FOUND!\n";
+//    return -1;
+//  }
+//  in.seekg(pos);
+//  uint32_t codeSize;
+//  unsigned char *codes = (unsigned char*)malloc(codeSize*sizeof(unsigned char));
+//  in >> codeSize;
+//  for (uint32_t i = 0; i < codeSize; i++) {
+//    in >> codes[i];
+//  }
+//  GammaDecoder gammDecoder(codes, codeSize);
+//  uint32_t *doc_list = gammDecoder.decode();
+//  uint32_t df = gammDecoder.getValuesNum();
+//  for (uint32_t i = 0; i < df; i++) {
+//    std::cout << doc_list[i] << " ";
+//  }
+//  std::cout << "\n";
+//  in.close();
+//
+//	return 0;
+//}

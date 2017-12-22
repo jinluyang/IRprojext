@@ -372,7 +372,7 @@ void MergeBlock(string s, int block_num, ofstream &of)
 			}
 		}
 		t.Setstr(min);
-		WriteTermDebug( of, &t);
+		WriteTerm( of, &t);
 	}
 }
 
