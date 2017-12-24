@@ -30,7 +30,8 @@ public:
     btree_node_t *parent;   /* 父结点 */  
     btree_node_t(){
             num = 0;
-//    this->keys = &(dictnode[m]);
+            keys.resize(10/*max+1*/);
+            child.resize(11);
     }
 };  
 
