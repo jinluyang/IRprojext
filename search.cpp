@@ -54,7 +54,8 @@ int intersect(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
 int unionDocIds(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
     int i = 0, a=0, b=0;
     initL(&doc_list);
-    if (!len1 || !len2) {
+    bool bl = !len1 && !len2;
+    if (!len1 && !len2) {
         cout << "对不起，没有您要查找的关键字!" << endl;
         return -1;
     }
@@ -90,7 +91,7 @@ int unionDocIds(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list)
 int negation(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
     int i = 0, a=0, b=0;
     initL(&doc_list);
-    if (!len1 || !len2) {
+    if (!len1 && !len2) {
         cout << "对不起，没有您要查找的关键字!" << endl;
         return -1;
     }
@@ -128,7 +129,7 @@ int transformStr(STRING &tranStr, STRING &tranOps) {
     cin.get(word, 100);
     int num = 0;
     int i = 0;
-    if (word == "") { 
+    if (cin.rdstate() == ios::failbit) { 
         cout << "对不起，您输入的关键字为空！" << endl;
         return -1;
     }
@@ -151,10 +152,8 @@ int transformStr(STRING &tranStr, STRING &tranOps) {
     int n = 0;
     for (i = 0; i < num; i++) {
         if (s[i] == "AND" || s[i] == "OR" || s[i] == "NOT") {
-  //          transform(s[i].begin(), s[i].end(), s[i].begin(), ::toupper);     //将操作符小写转换为大写
             if (s[i+1] == "NOT" && s[i] == "AND") {   //如果操作符为NOT，且与AND并列，需先存入NOT，再存AND
                 tranOps[m+1] = s[i]; 
-    //            transform(s[i+1].begin(), s[i+1].end(), s[i+1].begin(), ::toupper);
                 tranOps[m] = s[i+1];
                 i++;
             } else { 
@@ -193,6 +192,7 @@ int transformStr(STRING &tranStr, STRING &tranOps) {
 //        i++;
 //    }
 //
+    free(s);
     return num;
 
 }
@@ -201,11 +201,6 @@ int transformPos(streampos pos, UINT_32 &doc_list) {
     ifstream in("InvertedIndex.txt",ios::in);
     if (!in.is_open()) {
       cout << "file open fail\n";
-      return -1;
-    }
-    if (pos == -1) {
-      // NOT FOUND!
-      cout << "对不起，没有您要搜索的关键字!\n";
       return -1;
     }
     in.seekg(pos);
@@ -218,6 +213,8 @@ int transformPos(streampos pos, UINT_32 &doc_list) {
     GammaDecoder gammDecoder(codes, codeSize);
     doc_list = gammDecoder.decode();
     uint32_t df = gammDecoder.getValuesNum();
+    
+    free(codes);
     in.close();
 
     return df;
@@ -235,7 +232,6 @@ int main()
 {
     btree_t *  bt;
     bt = btree_create(8);
-	string word;   //要查找的单词
 	cout << ">>正在构建B树，请稍后……"<<endl;
 	addDic("InvertedIndex.txt",bt);
 	cout << ">>词库添加完毕！" << endl;
@@ -262,35 +258,29 @@ int main()
             return 0;
         }
     } else if (tranOps[n].empty()) {
-        cout << "Sorry, we cant understand what do you want to do" << endl;
+        cout << "对不起，您输入的语义有误，请重新输入！" << endl;
         return -1;    
-    }
-    else {
+    } else {
         int m = 1;
         streampos pos1 = bt->search(tranStr[m-1]);
         UINT_32 docL1;
         initL(&docL1);
-        len1 = transformPos(pos1, docL1);
+        if (pos1 != -1) 
+            len1 = transformPos(pos1, docL1);
         streampos pos2 = bt->search(tranStr[m]);
         UINT_32 docL2;
         initL(&docL2);
-        len2 = transformPos(pos2, docL2);
+        if (pos2 != -1)
+            len2 = transformPos(pos2, docL2);
 
         while (!tranOps[n].empty()) {
-            if (len1 == -1 || len2 == -1) { 
-                cout << "ERROR: 没有您要检索的关键字！请检查后重新启动" << endl;
-                break;
-            } else {
-                int lentmp = 0;
-                if (tranOps[n] == "AND") {
-                    len1 = (len1 > len2) ? intersect(docL1, docL2, len1, len2, doc_list) :intersect(docL2, docL1, len2, len1, doc_list);
-                }
-                else if (tranOps[n] == "OR")
-                    len1  = (len1 > len2) ? unionDocIds(docL1, docL2, len1, len2, doc_list) : unionDocIds(docL2, docL1, len2, len1, doc_list);
-                else if (tranOps[n] == "NOT") {
-                    len1 = (len1 > len2) ? negation(docL1, docL2, len1, len2, doc_list) : negation(docL2, docL1, len2, len1, doc_list) ;
-                    n++;  
-                }
+            if (tranOps[n] == "AND") {
+                len1 = (len1 > len2) ? intersect(docL1, docL2, len1, len2, doc_list) :intersect(docL2, docL1, len2, len1, doc_list);
+            } else if (tranOps[n] == "OR")
+                len1  = (len1 > len2) ? unionDocIds(docL1, docL2, len1, len2, doc_list) : unionDocIds(docL2, docL1, len2, len1, doc_list);
+            else if (tranOps[n] == "NOT") {
+                len1 = (len1 > len2) ? negation(docL1, docL2, len1, len2, doc_list) : negation(docL2, docL1, len2, len1, doc_list) ;
+                n++;  
             }
             if (!tranStr[m+1].empty()) {
                 docL1 = doc_list;
@@ -300,15 +290,24 @@ int main()
             m++;
             n++;
         }
+    
+    
+    free(docL1);
+    free(docL2);
+    
     }
 
-    if (len1 == -1 || len2 == -1) 
+    if (len1 == -1 || len2 == -1) { 
+        cout << "您查找的最终结果为空！" << endl;
         return -1;
-    else {
+    } else {
         cout << "OUTPUT: " << endl;
         visit(doc_list, len1);
     }
 
+    free(tranStr);
+    free(tranOps);
+    free(doc_list);
     return 0;
 
 }
