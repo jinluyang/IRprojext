@@ -7,7 +7,7 @@
 #include<fstream>
 #include<sstream>
 //#include<conio.h>
-//#include "single_string_dict.cpp"
+//#include "single_string_dict.hpp"
 #include "btree.h"
 #include "gammaCode.hpp"
 using namespace std;
@@ -289,8 +289,10 @@ streampos btree_t::search(string query)
 	} */   
   while(NULL != node) { 
     for(idx=0; idx<node->num; idx++) {  
+#ifdef BTREE_OUTPUT
                 cout << "----"<< endl;
                 cout <<this->dictionary.getStr(node->keys[idx].str)<<endl;
+#endif
       if(query == this->dictionary.getStr(node->keys[idx].str)) {  
         cout << " found the query"<<endl; 
         return node->keys[idx].fpos; 
@@ -303,7 +305,9 @@ streampos btree_t::search(string query)
     if(NULL != node->child[idx]) {  
 //                cout << node->keys[0].str;
       node = node->child[idx]; //in the next loop , continue searching 
+#ifdef BTREE_OUTPUT
             cout <<"down"<<endl;
+#endif
     } else {  
       cout <<"failed"<< endl;
       return -1;

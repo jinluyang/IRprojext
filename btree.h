@@ -1,4 +1,4 @@
-#include "single_string_dict.cpp"
+#include "single_string_dict.hpp"
 struct List		//索引表
 {
 	int DocId;
