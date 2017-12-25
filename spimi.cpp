@@ -242,7 +242,7 @@ void WriteTerm( ofstream &of, Term* t){
   uint32_t codeSize = gammEncoder.getCodesSize();
   of << codeSize << ' ';
   for (uint32_t i = 0; i < codeSize; i++) {
-    of << codes[i] << ' ';
+    of.put(codes[i]);
   }
   of << '\n';
   free(arr);
@@ -280,11 +280,14 @@ Term ReadTerm(stringstream &in)
 	int docid,tf;
 	Term dterm;
 	in >> toke >> codeSize;
+  in.get();  // jump space after codeSize
 	dterm.Setstr(toke);
   // Decode
   unsigned char *codes = (unsigned char*)malloc(codeSize*sizeof(uint8_t));
+  char code;
   for (uint32_t i = 0; i < codeSize; i++) {
-    in >> codes[i];
+    in.get(code);
+    codes[i] = (unsigned char)code;
   }
   GammaDecoder gammDecoder(codes, codeSize);
   uint32_t *doc_list = gammDecoder.decode();

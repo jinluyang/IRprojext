@@ -12,6 +12,8 @@
 #include "gammaCode.hpp"
 using namespace std;
 
+//#define BTREE_DEBUG
+//#define BTREE_OUTPUT
 
 static int btree_split(btree_t *btree, btree_node_t *node) ; 
 static int _btree_insert(btree_t *btree, btree_node_t *node, dictnode key, int idx); 
@@ -319,25 +321,55 @@ void addDic(string filename, btree_t * bt)
   string line,word,word1; 
   int num = 0;
   uint32_t codeSize;  // size of gamma codes
+#ifdef BTREE_DEBUG
+  ofstream of("invertedindex.txt", ios::out);
+  if (!of.is_open()) {
+    std::cout << "can't open \"invertedindex.txt\"";
+    return;
+  }
+#endif
   while(in >> word)
   {
     string::iterator it;
 
     streampos fpos = in.tellg();
 	  in >> codeSize;
-    // Jump codes.
-    unsigned char code;
+    in.get();  // jump the space after codeSize
+#ifdef BTREE_DEBUG
+    unsigned char *codes = (unsigned char*)malloc(codeSize*sizeof(unsigned char));
+    char code;
     for (uint32_t i = 0; i < codeSize; i++) {
-      in >> code;
+      in.get(code);
+      codes[i] = (unsigned char)code;
     }
+    GammaDecoder gammDecoder(codes, codeSize);
+    uint32_t *doc_list = gammDecoder.decode();
+    uint32_t df = gammDecoder.getValuesNum();
+    of << word << " " << df << " ";
+    for (uint32_t i = 0; i < df; i++) {
+      of << doc_list[i] << " ";
+    }
+    of << "\n";
+    free(codes);
+    free(doc_list);
+#else
+    // Jump codes.
+    for (uint32_t i = 0; i < codeSize; i++) {
+      in.get();
+    }
+#endif
+#ifdef BTREE_OUTPUT
 		cout << word << " " << codeSize;
     cout << " fpos: " << fpos << "\n";
+#endif
 		dictnode dnd;
 		dnd.ListHead = nullptr;
     dnd.fpos = fpos;
 		btree_insert(bt, dnd,word);
 	}
-  
+#ifdef BTREE_DEBUG
+  of.close();
+#endif
   in.close();
 }
 
@@ -367,8 +399,11 @@ void addDic(string filename, btree_t * bt)
 //  uint32_t codeSize;
 //  unsigned char *codes = (unsigned char*)malloc(codeSize*sizeof(unsigned char));
 //  in >> codeSize;
+//  in.get();  // jump the space after codeSize
+//  char code;
 //  for (uint32_t i = 0; i < codeSize; i++) {
-//    in >> codes[i];
+//    in.get(code);
+//    codes[i] = (unsigned char)code;
 //  }
 //  GammaDecoder gammDecoder(codes, codeSize);
 //  uint32_t *doc_list = gammDecoder.decode();
@@ -377,6 +412,8 @@ void addDic(string filename, btree_t * bt)
 //    std::cout << doc_list[i] << " ";
 //  }
 //  std::cout << "\n";
+//  free(codes);
+//  free(doc_list);
 //  in.close();
 //
 //	return 0;
