@@ -31,7 +31,7 @@ int intersect(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
     int i = 0, a = 0, b = 0;
     initL(&doc_list);
     if (!len1 || !len2) {
-        cout << "We can't find the keywords!" << endl;
+        cout << "对不起，没有您要查找的关键字!" << endl;
         return -1;
     }
 
@@ -47,7 +47,7 @@ int intersect(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
         } 
     }
     if (i == 0) {
-        cout << "The set of operation AND result is NULL!" << endl;
+        cout << "AND操作后结果集为空" << endl;
     }
     return i;
 }
@@ -55,7 +55,7 @@ int unionDocIds(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list)
     int i = 0, a=0, b=0;
     initL(&doc_list);
     if (!len1 || !len2) {
-        cout << "We can't find the keywords!" << endl;
+        cout << "对不起，没有您要查找的关键字!" << endl;
         return -1;
     }
      while (b < len2) {
@@ -80,7 +80,7 @@ int unionDocIds(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list)
      }
      
      if (i == 0) {
-        cout << "The set of operation OR result is NULL!" << endl;
+        cout << "OR操作后结果集为空!" << endl;
     }
 
     return i;
@@ -91,7 +91,7 @@ int negation(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
     int i = 0, a=0, b=0;
     initL(&doc_list);
     if (!len1 || !len2) {
-        cout << "We can't find the keywords!" << endl;
+        cout << "对不起，没有您要查找的关键字!" << endl;
         return -1;
     }
     while (b < len2 && a < len1) {
@@ -112,7 +112,7 @@ int negation(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
         i++;
      }
      if (i == 0) {
-        cout << "The set of operation NOT result is NULL!" << endl;
+        cout << "NOT操作后结果集为空!" << endl;
      }
 
     return i;
@@ -128,8 +128,10 @@ int transformStr(STRING &tranStr, STRING &tranOps) {
     cin.get(word, 100);
     int num = 0;
     int i = 0;
-    if (word == "") 
+    if (word == "") { 
+        cout << "对不起，您输入的关键字为空！" << endl;
         return -1;
+    }
 
 //将输入的单词存入数组
     const char* split = " ,.-?";
@@ -198,12 +200,12 @@ int transformStr(STRING &tranStr, STRING &tranOps) {
 int transformPos(streampos pos, UINT_32 &doc_list) {
     ifstream in("InvertedIndex.txt",ios::in);
     if (!in.is_open()) {
-      std::cout << "file open fail\n";
+      cout << "file open fail\n";
       return -1;
     }
     if (pos == -1) {
       // NOT FOUND!
-      cout << "NOT FOUND!\n";
+      cout << "对不起，没有您要搜索的关键字!\n";
       return -1;
     }
     in.seekg(pos);
@@ -237,6 +239,7 @@ int main()
 	cout << ">>正在构建B树，请稍后……"<<endl;
 	addDic("InvertedIndex.txt",bt);
 	cout << ">>词库添加完毕！" << endl;
+    cout << "===操作符请使用大写，否则，将视为关键字处理^_^===" << endl;
     STRING tranStr;
     STRING tranOps;
     int result = transformStr(tranStr, tranOps);
