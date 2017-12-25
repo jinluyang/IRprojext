@@ -13,4 +13,4 @@ hash :
 spimi :
 	g++ spimi.cpp gammaCode.cpp --std=c++11 -o SPIMI
 search :
-	g++ search.cpp --std=c++11 -o search.o
+	g++ search.cpp gammaCode.cpp --std=c++11 -o  search.o -g 

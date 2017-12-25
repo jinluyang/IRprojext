@@ -5,140 +5,122 @@
 #include <string.h>
 #include <fstream>
 #include <sstream>
-#include <stdexcept>
 #include <algorithm>
+#include "gammaCode.hpp"
 #include "btree.cpp"
+
 using namespace std;
+typedef uint32_t * UINT_32;
+typedef string * STRING;
 
-typedef struct List *LinkList;
-void muliIntersect();
+int initL(UINT_32 *L);
+int transformStr(STRING &tranStr, STRING &tranOps);
+int transformPos(streampos pos, UINT_32 &doc_list);
+int intersect(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list);
+int unionDocIds(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list);
+int negation(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list);
+void visit(UINT_32 &doc_list, int len);
 
-int InitList (LinkList *L);
-void intersect_L(LinkList &La, LinkList &Lb, LinkList &Lc);
-void union_L(LinkList &La, LinkList &Lb, LinkList &Lc);
-void negation_L(LinkList &La, LinkList &Lb, LinkList &Lc);
-int listTraverse(LinkList L, void(*vi)(LinkList&));
-void visit(LinkList &node);
-
-int InitList (LinkList *L) {
-    *L = (LinkList)malloc(sizeof(struct List));
+int initL(UINT_32 *L) {
+    *L = (UINT_32)malloc(sizeof(uint32_t) * 30);
     if(!*L)
         exit(-2);
-    (*L)->next = NULL;
     return 1;
 }
-
-// AND
-void intersect_L(LinkList &La, LinkList &Lb, LinkList &Lc) {
-    LinkList pa, pb, pc;
-    pa = La->next; pb = Lb->next;
-    Lc = pc = La;
-    while (pa && pb) {
-        if (pa->DocId == pb->DocId) {
-            pc = pa; 
-            pa = pa->next;
-        } else if (pa->DocId < pb->DocId) {
-            pc->next = pa->next;
-            free(pa);
-            pa = pc->next;
-        } else
-            pb = pb->next;
-    }
-    pc->next = NULL;
-    while (pa) {
-        pc = pa;
-        pa = pc->next;
-        free(pc);
-    }
-    pb = Lb;
-    while (pb) {
-        pc = pb;
-        pb = pc->next;
-        free(pc);
+int intersect(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
+    int i = 0, a = 0, b = 0;
+    initL(&doc_list);
+    if (!len1 || !len2) {
+        cout << "We can't find the keywords!" << endl;
+        return -1;
     }
 
+ //   cout << pa[0] << "--" << pb[0] << "--" << len1 << "--" << len2 << endl;
+    while (b < len2) {
+        if(pa[a] > pb[b]) b++;
+        else if (pa[a] < pb[b]) a++;
+        else {
+            doc_list[i] = pa[a];
+            i++;
+            a++;
+            b++;
+        } 
+    }
+    if (i == 0) {
+        cout << "The set of operation AND result is NULL!" << endl;
+    }
+    return i;
 }
-
-// OR
-void union_L(LinkList &La, LinkList &Lb, LinkList &Lc) {
-    LinkList pa, pb, pc;
-    pa = La->next; pb = Lb->next;
-    Lc = pc = La;
-    while (pa && pb) {
-        if (pb->DocId > pa->DocId) {
-            pc = pa; 
-            pa = pa->next;
+int unionDocIds(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
+    int i = 0, a=0, b=0;
+    initL(&doc_list);
+    if (!len1 || !len2) {
+        cout << "We can't find the keywords!" << endl;
+        return -1;
+    }
+     while (b < len2) {
+        if(pa[a] < pb[b]) {
+            doc_list[i] = pa[a];
+            a++;
+        } else if (pa[a] > pb[b]) {
+            doc_list[i] = pb[b];
+            b++;
         } else {
-            pc->next = pb;
-            pb = pb->next;
-            pc = pc->next;
-            pc->next = pa;
+            if (i > 0 && doc_list[i-1] < pa[a]) doc_list[i] = pa[a]; 
+            a++;
+            b++;
         }
+
+        i++;
     }
-    while (pa) {
-        pc = pa;
-        pa = pa->next;
+     while (a < len1) {
+        doc_list[i] = pa[a];
+        a++;
+        i++;
+     }
+     
+     if (i == 0) {
+        cout << "The set of operation OR result is NULL!" << endl;
     }
-    while (pb){
-        pc->next = pb;
-        pb = pb->next;
-        pc = pc->next;
-        pc->next = pa;
-    }
+
+    return i;
+
 
 }
-
-// AND NOT
-// A AND NOT B
-void negation_L(LinkList &La, LinkList &Lb, LinkList &Lc) {
-    LinkList pa, pb, pc;
-    pa = La->next; pb = Lb->next;
-    Lc = pc = La;
-    while (pa && pb) {
-        if (pa->DocId == pb->DocId) {
-            pc->next = pa->next;
-            free(pa);
-            pa = pc->next;
-        } else if (pa->DocId < pb->DocId) {
-            pc = pa;
-            pa = pa->next;
-        } else
-            pb = pb->next;
+int negation(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
+    int i = 0, a=0, b=0;
+    initL(&doc_list);
+    if (!len1 || !len2) {
+        cout << "We can't find the keywords!" << endl;
+        return -1;
     }
-    while (pa) {
-        pc = pa;
-        pa = pa->next;
-    }
-    pc->next = NULL;
-    pb = Lb;
-    while (pb) {
-        pc = pb;
-        pb = pc->next;
-        free(pc);
-    }
+    while (b < len2 && a < len1) {
+         if(pa[a] == pb[b]) {
+             a++;
+             b++;
+         } else {
+            doc_list[i] = pa[a]; 
+            i++;
+            a++;
+        }
+//         cout << a << "\t pa=" << pa[a] << "\t docList=" << doc_list[i] <<endl;
+     }
 
+     while (a < len1) {
+        doc_list[i] = pa[a];
+        a++;
+        i++;
+     }
+     if (i == 0) {
+        cout << "The set of operation NOT result is NULL!" << endl;
+     }
+
+    return i;
+  
 }
-
-// Traverse
-int listTraverse(LinkList L, void(*vi)(LinkList&)) {
-    LinkList p = L->next;
-    while (p != NULL) {
-        vi(p);
-        p = p->next;
-    } 
-    return 1;
-}
-
-void visit(LinkList &node) {
-    cout << node->DocId << endl;
-}
-
-//循环添加文件，实现多个布尔查询，例如输入：a AND about OR accept AND NOT able
-//返回：1 3 5 7 9 12 20 21
-//输入的关键字全部存入string[]中
-//暂时不支持括号内查询
-//暂不支持区分大小写，操作符必须大写
-void muliIntersect() {
+int transformStr(STRING &tranStr, STRING &tranOps) {
+    tranStr = (STRING)calloc(128, sizeof(string));
+    tranOps = (STRING)calloc(128, sizeof(string));
     char word[100];
     btree_t* bt;
     bt = btree_create(8);
@@ -146,119 +128,184 @@ void muliIntersect() {
     cin.get(word, 100);
     int num = 0;
     int i = 0;
-    
-    //将输入的单词存入数组
-    const char* split = " ";
-    char* p;
+    if (word == "") 
+        return -1;
+
+//将输入的单词存入数组
+    const char* split = " ,.-?";
     char* ptr;
-    char** str = (char**)calloc(128, sizeof(char*));
-    string* s = (string*)malloc(sizeof(string) * 10);
-    ptr = strtok_r(word, split, &p);
-    str[0] = ptr;
-    s[0] = str[0];
+    string* s = (string*)calloc(128, sizeof(string));
+    ptr = strtok(word, split);
     while (ptr != NULL) {
-        str[i] = ptr;
-        s[i] = str[i];
-        ptr = strtok_r(NULL, split, &p);
+        s[i] = ptr;
+        ptr = strtok(NULL, split);
         i++;
     }
     num = i;
 
-        
-
     string tmp;
-    string words[num];
-    string ops[num];
-//for 重新排序 s[]
+ //for 重新排序 s[]
     int m = 0;
     int n = 0;
     for (i = 0; i < num; i++) {
-        if (strcmp(s[i].c_str(), "AND")==0 || strcmp(s[i].c_str(), "OR")==0 || strcmp(s[i].c_str(), "NOT")==0) {
+        if (s[i] == "AND" || s[i] == "OR" || s[i] == "NOT") {
   //          transform(s[i].begin(), s[i].end(), s[i].begin(), ::toupper);     //将操作符小写转换为大写
-            if (strcmp(s[i+1].c_str(), "NOT") == 0 && strcmp(s[i].c_str(), "AND") == 0) {   //如果操作符为NOT，且与AND并列，需先存入NOT，再存AND
-                ops[m+1] = s[i]; 
+            if (s[i+1] == "NOT" && s[i] == "AND") {   //如果操作符为NOT，且与AND并列，需先存入NOT，再存AND
+                tranOps[m+1] = s[i]; 
     //            transform(s[i+1].begin(), s[i+1].end(), s[i+1].begin(), ::toupper);
-                ops[m] = s[i+1];
+                tranOps[m] = s[i+1];
                 i++;
-            } else 
-                ops[m] = s[i];
+            } else { 
+                if (i != 0 && tranOps[m-1] == s[i-1]) {
+                    cout << "对不起，您的输入不符合语义，请重新输入！" << endl;
+                    return -1;
+                }
+                tranOps[m] = s[i];
+            }
             m++;
         } else { 
-            words[n] = s[i];
+            if (i != 0 && tranStr[n-1] == s[i-1]) {
+                cout << "对不起，您的输入不符合语义，请重新输入！" << endl;
+                return -1;
+            }
+            tranStr[n] = s[i];
             n++;
         }
     }
     //如果第一个操作符为NOT，交换关键字位置再进行操作
     if (strcmp(s[0].c_str(), "NOT") == 0) {
-        tmp = words[0];
-        words[0] = words[1];
-        words[1] = tmp;
+        tmp = tranStr[0];
+        tranStr[0] = tranStr[1];
+        tranStr[1] = tmp;
     }
+//    // 打印关键字和操作符
+//    i=0;
+//    cout << "print" << endl;
+//    while (!tranStr[i].empty()) {
+//        cout << tranStr[i] << endl;
+//        i++;
+//    }
+//    i=0;
+//    while (!tranOps[i].empty()) {
+//        cout << tranOps[i] << endl;
+//        i++;
+//    }
+//
+    return num;
 
-/*  打印关键字和操作符
-    i=0;
-    while (!words[i].empty()) {
-        cout << words[i] << endl;
-        i++;
-    }
-    i=0;
-    while (!ops[i].empty()) {
-        cout << ops[i] << endl;
-        i++;
-    }
-*/	
-    addDic("InvertedIndex.txt",bt);
-    LinkList C;
-    if(num == 1) {
-        C = bt->search(word);
-        if (C->next == NULL) 
-            cout << "ERROR: 没有您要检索的关键字！请检查后重新启动" << endl;
-    } else { 
-
-    LinkList A, B;
-    InitList(&A);
-    InitList(&B);
-    m=1;n=0;
-    try {
-    A = bt->search(words[m-1]);
-    B = bt->search(words[m]);
-    } catch (exception &e) {
-        cout << e.what();
-    }
- 
-    while (!ops[n].empty()) {
-        if (A->next==NULL || B->next==NULL) {
-            cout << "ERROR: 没有您要检索的关键字！请检查后重新启动" << endl;
-            break;
-        } else {
-            if(ops[n] == "AND") 
-                intersect_L(A, B, C);
-            else if (ops[n] == "OR") 
-                union_L(A, B, C);
-            else if (ops[n] == "NOT") {
-                negation_L(A, B, C);
-                n++;
-            }
-        }
-        if (!words[m+1].empty()) {
-            A = C;
-            B = bt->search(words[m+1]);
-        }
-             
-        m++;
-        n++;
-    }
-    }
-    if (C->next != NULL) {
-    cout << "Output: " << endl; 
-    listTraverse(C, visit);
-    }
 }
+
+int transformPos(streampos pos, UINT_32 &doc_list) {
+    ifstream in("InvertedIndex.txt",ios::in);
+    if (!in.is_open()) {
+      std::cout << "file open fail\n";
+      return -1;
+    }
+    if (pos == -1) {
+      // NOT FOUND!
+      cout << "NOT FOUND!\n";
+      return -1;
+    }
+    in.seekg(pos);
+    uint32_t codeSize;
+    unsigned char *codes = (unsigned char*)malloc(codeSize*sizeof(unsigned char));
+    in >> codeSize;
+    for (uint32_t i = 0; i < codeSize; i++) {
+        in >> codes[i];
+    }
+    GammaDecoder gammDecoder(codes, codeSize);
+    doc_list = gammDecoder.decode();
+    uint32_t df = gammDecoder.getValuesNum();
+    in.close();
+
+    return df;
+}
+
+void visit(UINT_32 &doc_list, int len) {
+    for (uint32_t i = 0; i < len; i++) {
+      cout << doc_list[i] << " ";
+    }
+    cout << endl;
+}
+
 
 int main()
 {
-    muliIntersect();
+    btree_t *  bt;
+    bt = btree_create(8);
+	string word;   //要查找的单词
+	cout << ">>正在构建B树，请稍后……"<<endl;
+	addDic("InvertedIndex.txt",bt);
+	cout << ">>词库添加完毕！" << endl;
+    STRING tranStr;
+    STRING tranOps;
+    int result = transformStr(tranStr, tranOps);
+    if (result == -1)
+        return -1;
 
-	return 0;
+    int n = 0;
+    int len1 = 0;
+    int len2 = 0;
+    UINT_32 doc_list;
+    if (result == 1) {
+        cout << "Only one word:" << tranStr[n] << endl;
+        streampos pos = bt->search(tranStr[n]);
+        initL(&doc_list);
+        int len = transformPos(pos, doc_list);
+        if (len == -1) 
+            return -1;
+        else {
+            visit(doc_list, len);
+            return 0;
+        }
+    } else if (tranOps[n].empty()) {
+        cout << "Sorry, we cant understand what do you want to do" << endl;
+        return -1;    
+    }
+    else {
+        int m = 1;
+        streampos pos1 = bt->search(tranStr[m-1]);
+        UINT_32 docL1;
+        initL(&docL1);
+        len1 = transformPos(pos1, docL1);
+        streampos pos2 = bt->search(tranStr[m]);
+        UINT_32 docL2;
+        initL(&docL2);
+        len2 = transformPos(pos2, docL2);
+
+        while (!tranOps[n].empty()) {
+            if (len1 == -1 || len2 == -1) { 
+                cout << "ERROR: 没有您要检索的关键字！请检查后重新启动" << endl;
+                break;
+            } else {
+                int lentmp = 0;
+                if (tranOps[n] == "AND") {
+                    len1 = (len1 > len2) ? intersect(docL1, docL2, len1, len2, doc_list) :intersect(docL2, docL1, len2, len1, doc_list);
+                }
+                else if (tranOps[n] == "OR")
+                    len1  = (len1 > len2) ? unionDocIds(docL1, docL2, len1, len2, doc_list) : unionDocIds(docL2, docL1, len2, len1, doc_list);
+                else if (tranOps[n] == "NOT") {
+                    len1 = (len1 > len2) ? negation(docL1, docL2, len1, len2, doc_list) : negation(docL2, docL1, len2, len1, doc_list) ;
+                    n++;  
+                }
+            }
+            if (!tranStr[m+1].empty()) {
+                docL1 = doc_list;
+                pos2 = bt->search(tranStr[m+1]);
+                len2 = transformPos(pos2, docL2);
+            }
+            m++;
+            n++;
+        }
+    }
+
+    if (len1 == -1 || len2 == -1) 
+        return -1;
+    else {
+        cout << "OUTPUT: " << endl;
+        visit(doc_list, len1);
+    }
+
+    return 0;
+
 }
-
