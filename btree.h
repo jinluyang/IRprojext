@@ -1,4 +1,4 @@
-#include "single_string_dict.cpp"
+#include "single_string_dict.hpp"
 struct List		//索引表
 {
 	int DocId;
@@ -30,7 +30,8 @@ public:
     btree_node_t *parent;   /* 父结点 */  
     btree_node_t(){
             num = 0;
-//    this->keys = &(dictnode[m]);
+            keys.resize(10/*max+1*/);
+            child.resize(11);
     }
 };  
 

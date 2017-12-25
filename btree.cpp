@@ -7,15 +7,18 @@
 #include<fstream>
 #include<sstream>
 //#include<conio.h>
-//#include "single_string_dict.cpp"
+//#include "single_string_dict.hpp"
 #include "btree.h"
 #include "gammaCode.hpp"
 using namespace std;
 
+//#define BTREE_DEBUG
+//#define BTREE_OUTPUT
 
 static int btree_split(btree_t *btree, btree_node_t *node) ; 
 static int _btree_insert(btree_t *btree, btree_node_t *node, dictnode key, int idx); 
 int btree_insert(btree_t *btree, dictnode key); 
+void print_bt(btree_t * bt);
 
 btree_t *  btree_create( int m)  
 {  
@@ -61,8 +64,10 @@ static btree_node_t *btree_creat_node(btree_t *btree) // using its max
     //node = (btree_node_t *)calloc(1, sizeof(btree_node_t));  
 //    cout << "create" << endl;
     node = new(btree_node_t);  
+//    node = new btree_node_t(btree->max);  
   
     node->num = 0;  
+    //TODO initial size too small may result in memory error resizing
     node->child.resize(btree->max+2);
     node->keys.resize(btree->max+1);
     node->parent=NULL;
@@ -124,7 +129,7 @@ int btree_insert(btree_t *btree, dictnode key, string word)
                 break;  
             }  
         }  
-  
+ //no problem with this above 
         if(NULL != node->child[idx]) {  
             node = node->child[idx]; //in the next loop , continue searching 
         }  
@@ -168,8 +173,15 @@ static int btree_split(btree_t *btree, btree_node_t *node)
   
   
     while(node->num > btree->max) { 
+//            cout << "split"<< endl;
         /* Split node */   
         total = node->num;  
+//        if (t!=NULL){
+//        //        cout << t->keys[0].str<< endl;
+//        cout << btree->dictionary.getStr(t->keys[0].str)<< endl;
+        //have abode here
+//        }
+        //cout << btree->dictionary.getStr(((node->child[0])->keys[0]).str)<< endl;
   
         node2 = btree_creat_node(btree);  
         if(NULL == node2) {     
@@ -177,7 +189,6 @@ static int btree_split(btree_t *btree, btree_node_t *node)
             return -1;  
         }  
   
-/////here
         /* Copy data */   
 // copy the keys and child of node to node2
         for (int j = sidx+1;j < total ;j++)
@@ -189,15 +200,15 @@ static int btree_split(btree_t *btree, btree_node_t *node)
             node2->keys[j-sidx-1]=node->keys[j];
             node2->child[j-sidx-1]=node->child[j];
         }
-        node2->child[total]=node->child[total];
+        node2->child[total-sidx-1]=node->child[total];//bug here
   
         node2->num = (total - sidx - 1);  
+        //cout << "node2->num="<< node2->num<<" total="<< total<< endl;
         node2->parent  = node->parent;  
   
         node->num = sidx;   
         /* Insert into parent */  
         parent  = node->parent;  
-       // cout << "split"<< endl;
         if(NULL == parent)  {      
             /* Split root node */   
             parent = btree_creat_node(btree);  
@@ -212,22 +223,22 @@ static int btree_split(btree_t *btree, btree_node_t *node)
             parent->child[0] = node;
             node->parent = parent;   
             node2->parent = parent;   
+            //t = node2->child[0];
+//            if (t!=NULL)
+//                    cout << btree->dictionary.getStr(t->keys[0].str)<< endl;
   
             parent->keys[0]=node->keys[sidx];  
             parent->child[1] = node2;
+            //cout << node2->child[0]->keys[0].str<< endl;
 //            parent->child.push_back(node2);  
             parent->num++;  
-//            cout << parent->num<<endl;
-//            cout <<"sidx="<< sidx<<endl;
 //            cout << node->keys[sidx].str<<endl;
 //            cout <<"lenth of parent->key"<< parent->keys.size()<<endl;
 //            cout << parent->keys[0].str<<endl;
         }
-        else { 
+        else {
 //                cout << "parent num:"<< parent->num<<endl;
             /* Insert into parent node */   
-//                parent->keys.resize(parent->keys.size()+1)
-//                parent->child.resize(parent->child.size()+1)
             for(idx=parent->num; idx>0; idx--) {         
 //                    cout << "idx="<<idx<< endl;
                 if(node->keys[sidx].str < parent->keys[idx-1].str) {         
@@ -239,10 +250,12 @@ static int btree_split(btree_t *btree, btree_node_t *node)
             }         
   
             parent->keys[idx] = node->keys[sidx];  
+ //           cout <<"sidx"<< sidx<< endl;
             parent->child[idx+1] = node2;  
+//            cout << idx+1<<' '<< parent->num<< endl;
+//            cout << btree->dictionary.getStr(node2->keys[0].str)<<endl;
             node2->parent = parent;   
-            parent->num++;  
-        }         
+            parent->num++;  }         
   
 //        memset(node->keys+sidx, 0, (total - sidx) * sizeof(int));  
 //        memset(node->child+sidx+1, 0, (total - sidx) * sizeof(btree_node_t *));  
@@ -276,7 +289,10 @@ streampos btree_t::search(string query)
 	} */   
   while(NULL != node) { 
     for(idx=0; idx<node->num; idx++) {  
-//                cout <<node->keys[idx].str<<endl;
+#ifdef BTREE_OUTPUT
+                cout << "----"<< endl;
+                cout <<this->dictionary.getStr(node->keys[idx].str)<<endl;
+#endif
       if(query == this->dictionary.getStr(node->keys[idx].str)) {  
         cout << " found the query"<<endl; 
         return node->keys[idx].fpos; 
@@ -289,7 +305,9 @@ streampos btree_t::search(string query)
     if(NULL != node->child[idx]) {  
 //                cout << node->keys[0].str;
       node = node->child[idx]; //in the next loop , continue searching 
-//            cout <<"down"<<endl;
+#ifdef BTREE_OUTPUT
+            cout <<"down"<<endl;
+#endif
     } else {  
       cout <<"failed"<< endl;
       return -1;
@@ -300,12 +318,26 @@ streampos btree_t::search(string query)
 void print_bt(btree_t * bt)
 {
     btree_node_t * node = bt->root;
+    btree_node_t * node2 = bt->root;
     cout << "num"<< node->num<<endl;
     for (int i=0;i<node->num;i++)
     {
         cout <<bt->dictionary.getStr(node->keys[i].str) <<endl;
     }
     cout <<"****"<<endl;
+//    cout <<"2nd"<<endl;
+//    int num = node->num;
+//    node2 = node;//
+//    for (int i=0;i<node->num;i++)
+//    {
+//        node = node2->child[i];
+//        for (int i=0;i<node->num;i++)
+//        {
+//            cout <<bt->dictionary.getStr(node->keys[i].str) <<endl;
+//        }
+//    }
+//    cout << "===="<< endl;
+
 }
 
 void addDic(string filename, btree_t * bt)
@@ -319,25 +351,56 @@ void addDic(string filename, btree_t * bt)
   string line,word,word1; 
   int num = 0;
   uint32_t codeSize;  // size of gamma codes
+#ifdef BTREE_DEBUG
+  ofstream of("invertedindex.txt", ios::out);
+  if (!of.is_open()) {
+    std::cout << "can't open \"invertedindex.txt\"";
+    return;
+  }
+#endif
   while(in >> word)
   {
     string::iterator it;
 
     streampos fpos = in.tellg();
 	  in >> codeSize;
-    // Jump codes.
-    unsigned char code;
+    in.get();  // jump the space after codeSize
+#ifdef BTREE_DEBUG
+    unsigned char *codes = (unsigned char*)malloc(codeSize*sizeof(unsigned char));
+    char code;
     for (uint32_t i = 0; i < codeSize; i++) {
-      in >> code;
+      in.get(code);
+      codes[i] = (unsigned char)code;
     }
+    GammaDecoder gammDecoder(codes, codeSize);
+    uint32_t *doc_list = gammDecoder.decode();
+    uint32_t df = gammDecoder.getValuesNum();
+    of << word << " " << df << " ";
+    for (uint32_t i = 0; i < df; i++) {
+      of << doc_list[i] << " ";
+    }
+    of << "\n";
+    free(codes);
+    free(doc_list);
+#else
+    // Jump codes.
+    for (uint32_t i = 0; i < codeSize; i++) {
+      in.get();
+    }
+#endif
+#ifdef BTREE_OUTPUT
 		cout << word << " " << codeSize;
     cout << " fpos: " << fpos << "\n";
+#endif
 		dictnode dnd;
 		dnd.ListHead = nullptr;
     dnd.fpos = fpos;
 		btree_insert(bt, dnd,word);
+                //print_bt(bt);
 	}
-  
+#ifdef BTREE_DEBUG
+  of.close();
+#endif
   in.close();
 }
 
@@ -367,8 +430,11 @@ void addDic(string filename, btree_t * bt)
 //  uint32_t codeSize;
 //  unsigned char *codes = (unsigned char*)malloc(codeSize*sizeof(unsigned char));
 //  in >> codeSize;
+//  in.get();  // jump the space after codeSize
+//  char code;
 //  for (uint32_t i = 0; i < codeSize; i++) {
-//    in >> codes[i];
+//    in.get(code);
+//    codes[i] = (unsigned char)code;
 //  }
 //  GammaDecoder gammDecoder(codes, codeSize);
 //  uint32_t *doc_list = gammDecoder.decode();
@@ -377,6 +443,8 @@ void addDic(string filename, btree_t * bt)
 //    std::cout << doc_list[i] << " ";
 //  }
 //  std::cout << "\n";
+//  free(codes);
+//  free(doc_list);
 //  in.close();
 //
 //	return 0;
