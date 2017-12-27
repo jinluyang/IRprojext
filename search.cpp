@@ -13,7 +13,7 @@ using namespace std;
 typedef uint32_t * UINT_32;
 typedef string * STRING;
 
-int initL(UINT_32 *L);
+int initL(UINT_32 *L, int type_id);
 int transformStr(STRING &tranStr, STRING &tranOps);
 int transformPos(streampos pos, UINT_32 &doc_list);
 int intersect(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list);
@@ -21,21 +21,31 @@ int unionDocIds(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list)
 int negation(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list);
 void visit(UINT_32 &doc_list, int len);
 
-int initL(UINT_32 *L) {
-    *L = (UINT_32)malloc(sizeof(uint32_t) * 30);
+//初始化
+int initL(UINT_32 *L, int type_id) {
+    if (type_id == 0) { 
+        *L = (UINT_32)malloc(sizeof(uint32_t) * 10);
+    } else {
+        *L = (UINT_32)malloc(sizeof(uint32_t) * 20);
+    }
+//    *L = (UINT_32)malloc(sizeof(uint32_t) * 30);
     if(!*L)
         exit(-2);
     return 1;
 }
+
+// A AND B
+// len1 > len2
+// if len1==-1 or len2 == -1    return -1;
+// after operation AND, length = 0      return -1;
 int intersect(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
     int i = 0, a = 0, b = 0;
-    initL(&doc_list);
-    if (!len1 || !len2) {
+    initL(&doc_list, 0);
+    if (len1==-1 || len2==-1) {
         cout << "对不起，没有您要查找的关键字!" << endl;
         return -1;
     }
 
- //   cout << pa[0] << "--" << pb[0] << "--" << len1 << "--" << len2 << endl;
     while (b < len2) {
         if(pa[a] > pb[b]) b++;
         else if (pa[a] < pb[b]) a++;
@@ -48,30 +58,35 @@ int intersect(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
     }
     if (i == 0) {
         cout << "AND操作后结果集为空" << endl;
+        return -1;
     }
     return i;
 }
+
+// A OR B
+// len1 > len2
+// if len1 == -1 and len2 == -1     reutrn -1
+// after operation OR, length = 0       return -1
 int unionDocIds(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
     int i = 0, a=0, b=0;
-    initL(&doc_list);
-    bool bl = !len1 && !len2;
-    if (!len1 && !len2) {
+    initL(&doc_list, 1);
+    if (len1==-1 && len2==-1) {
         cout << "对不起，没有您要查找的关键字!" << endl;
         return -1;
     }
-     while (b < len2) {
-        if(pa[a] < pb[b]) {
+
+     while (b < len2 && a < len1) {
+        if(pa[a] == pb[b]) {
             doc_list[i] = pa[a];
             a++;
-        } else if (pa[a] > pb[b]) {
-            doc_list[i] = pb[b];
             b++;
-        } else {
-            if (i > 0 && doc_list[i-1] < pa[a]) doc_list[i] = pa[a]; 
+        } else if (pa[a] < pb[b]) {
+            doc_list[i] = pa[a];
             a++;
+        } else {
+          if (i > 0 && doc_list[i-1] < pb[b]) doc_list[i] = pb[b]; 
             b++;
         }
-
         i++;
     }
      while (a < len1) {
@@ -79,19 +94,26 @@ int unionDocIds(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list)
         a++;
         i++;
      }
-     
+     while (b < len2) {
+        doc_list[i] = pb[b];
+        b++;
+        i++;
+     } 
      if (i == 0) {
         cout << "OR操作后结果集为空!" << endl;
+        return -1;
     }
 
     return i;
-
-
 }
+
+// A AND NOT B
+// if len1 == -1      return  -1
+// after operation NOT, length = 0, return -1
 int negation(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
     int i = 0, a=0, b=0;
-    initL(&doc_list);
-    if (!len1 && !len2) {
+    initL(&doc_list, 1);
+    if (len1==-1) {
         cout << "对不起，没有您要查找的关键字!" << endl;
         return -1;
     }
@@ -99,26 +121,31 @@ int negation(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
          if(pa[a] == pb[b]) {
              a++;
              b++;
-         } else {
+         } else if (pa[a] < pb[b]) {
             doc_list[i] = pa[a]; 
             i++;
             a++;
+        } else {
+            b++;
         }
-//         cout << a << "\t pa=" << pa[a] << "\t docList=" << doc_list[i] <<endl;
      }
 
      while (a < len1) {
-        doc_list[i] = pa[a];
+         doc_list[i] = pa[a];
         a++;
         i++;
      }
      if (i == 0) {
         cout << "NOT操作后结果集为空!" << endl;
+        return -1;
      }
 
     return i;
   
 }
+
+// user input words
+// transform words to keywords and operation
 int transformStr(STRING &tranStr, STRING &tranOps) {
     tranStr = (STRING)calloc(128, sizeof(string));
     tranOps = (STRING)calloc(128, sizeof(string));
@@ -156,6 +183,7 @@ int transformStr(STRING &tranStr, STRING &tranOps) {
                 tranOps[m+1] = s[i]; 
                 tranOps[m] = s[i+1];
                 i++;
+                m++;
             } else { 
                 if (i != 0 && tranOps[m-1] == s[i-1]) {
                     cout << "对不起，您的输入不符合语义，请重新输入！" << endl;
@@ -191,12 +219,13 @@ int transformStr(STRING &tranStr, STRING &tranOps) {
 //        cout << tranOps[i] << endl;
 //        i++;
 //    }
-//
+
     free(s);
     return num;
 
 }
 
+// convert pos(streampos) to doc_list(uint32_t*)
 int transformPos(streampos pos, UINT_32 &doc_list) {
     ifstream in("InvertedIndex.txt",ios::in);
     if (!in.is_open()) {
@@ -207,8 +236,12 @@ int transformPos(streampos pos, UINT_32 &doc_list) {
     uint32_t codeSize;
     unsigned char *codes = (unsigned char*)malloc(codeSize*sizeof(unsigned char));
     in >> codeSize;
+    in.get();
+    char code;
     for (uint32_t i = 0; i < codeSize; i++) {
-        in >> codes[i];
+        in.get(code);
+        codes[i] = (unsigned char) code;
+//        in >> codes[i];
     }
     GammaDecoder gammDecoder(codes, codeSize);
     doc_list = gammDecoder.decode();
@@ -220,6 +253,7 @@ int transformPos(streampos pos, UINT_32 &doc_list) {
     return df;
 }
 
+// traverse
 void visit(UINT_32 &doc_list, int len) {
     for (uint32_t i = 0; i < len; i++) {
       cout << doc_list[i] << " ";
@@ -243,13 +277,17 @@ int main()
         return -1;
 
     int n = 0;
-    int len1 = 0;
-    int len2 = 0;
+    int len1 = -1;
+    int len2 = -1;
     UINT_32 doc_list;
     if (result == 1) {
-        cout << "Only one word:" << tranStr[n] << endl;
+        cout << "Only one word: " << tranStr[n] << endl;
         streampos pos = bt->search(tranStr[n]);
-        initL(&doc_list);
+        if (pos == -1) {
+            cout << "对不起，没有您要搜索的关键字！请重新输入" << endl;
+            return -1;        
+        }
+ //       initL(&doc_list);
         int len = transformPos(pos, doc_list);
         if (len == -1) 
             return -1;
@@ -264,22 +302,22 @@ int main()
         int m = 1;
         streampos pos1 = bt->search(tranStr[m-1]);
         UINT_32 docL1;
-        initL(&docL1);
+//        initL(&docL1);
         if (pos1 != -1) 
             len1 = transformPos(pos1, docL1);
         streampos pos2 = bt->search(tranStr[m]);
         UINT_32 docL2;
-        initL(&docL2);
+//        initL(&docL2);
         if (pos2 != -1)
             len2 = transformPos(pos2, docL2);
 
         while (!tranOps[n].empty()) {
             if (tranOps[n] == "AND") {
                 len1 = (len1 > len2) ? intersect(docL1, docL2, len1, len2, doc_list) :intersect(docL2, docL1, len2, len1, doc_list);
-            } else if (tranOps[n] == "OR")
+            } else if (tranOps[n] == "OR") {
                 len1  = (len1 > len2) ? unionDocIds(docL1, docL2, len1, len2, doc_list) : unionDocIds(docL2, docL1, len2, len1, doc_list);
-            else if (tranOps[n] == "NOT") {
-                len1 = (len1 > len2) ? negation(docL1, docL2, len1, len2, doc_list) : negation(docL2, docL1, len2, len1, doc_list) ;
+            } else if (tranOps[n] == "NOT") {
+                len1 = negation(docL1, docL2, len1, len2, doc_list);
                 n++;  
             }
             if (!tranStr[m+1].empty()) {
@@ -291,13 +329,9 @@ int main()
             n++;
         }
     
-    
-    free(docL1);
-    free(docL2);
-    
     }
 
-    if (len1 == -1 || len2 == -1) { 
+    if (len1 == -1) { 
         cout << "您查找的最终结果为空！" << endl;
         return -1;
     } else {
