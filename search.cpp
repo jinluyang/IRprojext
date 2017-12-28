@@ -13,7 +13,7 @@ using namespace std;
 typedef uint32_t * UINT_32;
 typedef string * STRING;
 
-int initL(UINT_32 *L, int type_id);
+int initL(UINT_32 *L, int type_len);
 int transformStr(STRING &tranStr, STRING &tranOps);
 int transformPos(streampos pos, UINT_32 &doc_list);
 int intersect(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list);
@@ -22,13 +22,13 @@ int negation(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list);
 void visit(UINT_32 &doc_list, int len);
 
 //初始化
-int initL(UINT_32 *L, int type_id) {
-    if (type_id == 0) { 
-        *L = (UINT_32)malloc(sizeof(uint32_t) * 10);
-    } else {
-        *L = (UINT_32)malloc(sizeof(uint32_t) * 20);
-    }
-//    *L = (UINT_32)malloc(sizeof(uint32_t) * 30);
+int initL(UINT_32 *L, int type_len) {
+//    if (type_id == 0) { 
+//        *L = (UINT_32)malloc(sizeof(uint32_t) * 10);
+//    } else {
+//        *L = (UINT_32)malloc(sizeof(uint32_t) * 20);
+//    }
+    *L = (UINT_32)malloc(sizeof(uint32_t) * type_len);
     if(!*L)
         exit(-2);
     return 1;
@@ -40,7 +40,7 @@ int initL(UINT_32 *L, int type_id) {
 // after operation AND, length = 0      return -1;
 int intersect(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
     int i = 0, a = 0, b = 0;
-    initL(&doc_list, 0);
+    initL(&doc_list, len2);
     if (len1==-1 || len2==-1) {
         cout << "对不起，没有您要查找的关键字!" << endl;
         return -1;
@@ -69,7 +69,7 @@ int intersect(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
 // after operation OR, length = 0       return -1
 int unionDocIds(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
     int i = 0, a=0, b=0;
-    initL(&doc_list, 1);
+    initL(&doc_list, len1+len2);
     if (len1==-1 && len2==-1) {
         cout << "对不起，没有您要查找的关键字!" << endl;
         return -1;
@@ -112,7 +112,7 @@ int unionDocIds(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list)
 // after operation NOT, length = 0, return -1
 int negation(UINT_32 &pa, UINT_32 &pb, int len1, int len2, UINT_32 &doc_list) {
     int i = 0, a=0, b=0;
-    initL(&doc_list, 1);
+    initL(&doc_list, len1);
     if (len1==-1) {
         cout << "对不起，没有您要查找的关键字!" << endl;
         return -1;
