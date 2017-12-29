@@ -160,12 +160,16 @@ int transformStr(STRING &tranStr, STRING &tranOps) {
         cout << "对不起，您输入的关键字为空！" << endl;
         return -1;
     }
-
+    
 //将输入的单词存入数组
     const char* split = " ,.-?";
     char* ptr;
     string* s = (string*)calloc(128, sizeof(string));
     ptr = strtok(word, split);
+    if (ptr == NULL) {
+        cout << "对不起，您的输入有误！" << endl;
+        return -1;
+    }
     while (ptr != NULL) {
         s[i] = ptr;
         ptr = strtok(NULL, split);
