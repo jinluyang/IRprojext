@@ -30,16 +30,19 @@ querys = extract(querys)
 
 query_head = '''<parameters>
 <index>../../index</index>
-<count>100</count>
+<count>1000</count>
 '''
 
 #<text>to do</text>
 query_tail = '''<trecFormat>true</trecFormat>
 <runID>mymodel</runID>
+<rule>method:linear,collectionLambda:0.2</rule>
 </parameters>'''
 query_mid = ''
+i = 0
 for q in querys:
-	query_mid += '<query><text>#combine(' + q + ')</text></query>\n' 
+	i+=1
+	query_mid += '<query><number>'+ str(i) +'</number><text>' + q + '</text></query>\n' 
 #	os.system('''IndriRunQuery.exe query_param.txt -query="'''+q+'''" >>res.txt''')
 
 with open('query_parameter.txt','w') as f:
