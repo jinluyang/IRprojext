@@ -1,16 +1,14 @@
-all : spimi.cpp gammaCode.cpp gammaCode.hpp btree.cpp btree.h dic_hash.cpp
+all : spimi.cpp gammaCode.cpp search.cpp btree.cpp single_string_dict.cpp
 	g++ spimi.cpp gammaCode.cpp --std=c++11 -o SPIMI
-	g++ btree.cpp gammaCode.cpp --std=c++11 -o btree.o
-	g++ dic_hash.cpp --std=c++11 -o hash.o
-	g++ search.cpp --std=c++11 -o search.o
+	g++ search.cpp btree.cpp single_string_dict.cpp gammaCode.cpp --std=c++11 -o search
 
 clean :
-	rm block*.txt InvertedIndex.txt SPIMI
-btree :
-	g++ btree.cpp gammaCode.cpp --std=c++11 -o btree.o
-hash :
-	g++ dic_hash.cpp --std=c++11 -o hash.o
-spimi :
+	rm block*.txt InvertedIndex.txt SPIMI search 
+btree : btree.cpp single_string_dict.cpp gammaCode.cpp
+	g++ btree.cpp single_string_dict.cpp gammaCode.cpp --std=c++11 -o btree
+hash : dic_hash.cpp
+	g++ dic_hash.cpp --std=c++11 -o hash
+spimi : spimi.cpp gammaCode.cpp
 	g++ spimi.cpp gammaCode.cpp --std=c++11 -o SPIMI
-search :
-	g++ search.cpp gammaCode.cpp --std=c++11 -o  search.o -g 
+search : btree.cpp search.cpp single_string_dict.cpp gammaCode.cpp
+	g++ -g btree.cpp search.cpp single_string_dict.cpp gammaCode.cpp --std=c++11 -o search 
